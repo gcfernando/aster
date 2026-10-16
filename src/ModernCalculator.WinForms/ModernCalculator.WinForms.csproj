@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ApplicationDefaultFont>Segoe UI, 10pt</ApplicationDefaultFont>
+    <ApplicationIcon>Resources/aster.ico</ApplicationIcon>
+    <AssemblyName>Aster</AssemblyName>
+    <RootNamespace>ModernCalculator.WinForms</RootNamespace>
+    <Product>Aster Calculator</Product>
+    <Description>A thoughtful space for everyday calculation.</Description>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../ModernCalculator.Core/ModernCalculator.Core.csproj" />
+    <ProjectReference Include="../ModernCalculator.Infrastructure/ModernCalculator.Infrastructure.csproj" />
+    <EmbeddedResource Include="Resources/aster.ico" />
+  </ItemGroup>
+</Project>
