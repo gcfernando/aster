@@ -2,7 +2,9 @@
   <img src="docs/images/aster.png" width="72" height="72" alt="Aster's blue four-point star logo">
 </p>
 
-# 🧮 Aster — Offline Windows Calculator
+<a id="-aster--offline-windows-calculator"></a>
+
+# 🧮 Aster — Offline Windows Calculator with C# and .NET 10
 
 <p align="center"><strong>A thoughtful space for everyday calculation.</strong></p>
 
@@ -26,6 +28,7 @@ Use it to check a percentage, evaluate a formula, inspect an integer in four bas
 <details>
 <summary><strong>📚 Table of contents</strong></summary>
 
+- [📚 Documentation](#readme-documentation)
 - [🚀 Quick start](#readme-quick-start)
 - [🖥️ Aster GUI — Graphical User Interface](#readme-gui)
 - [📸 Aster GUI screenshot gallery](#readme-gallery)
@@ -42,6 +45,18 @@ Use it to check a percentage, evaluate a formula, inspect an integer in four bas
 - [📄 License and resources](#readme-license)
 
 </details>
+
+<a id="readme-documentation"></a>
+
+## 📚 Documentation
+
+| Start here | What it covers |
+|---|---|
+| [Quick start](#readme-quick-start) | Build and launch the Windows calculator. |
+| [Modes and usage](#readme-usage) | Decimal arithmetic, scientific expressions, programmer bases, unit conversion and dates. |
+| [Numeric behavior reference](docs/numeric-behavior.md) | Precision, rounding, range limits and state/input contracts for each engine. |
+| [Development and testing](docs/development.md) | Restore/build, xUnit results, hidden component checks, manual walkthroughs and audit packaging assumptions. |
+| [Component-check methodology](tests/ModernCalculator.UiChecks/README.md) | Running/filtering the WinForms harness and interpreting reports, snapshots and DPI simulations. |
 
 <a id="readme-quick-start"></a>
 
@@ -208,40 +223,7 @@ Preferences → Window also offers **Ctrl+Alt+1–5** for mode switching. Enter 
 
 Display rounding does not change the underlying calculation. Scientific and Converter copy/history use round-trip (`G17`) values. Standard memory and history retain full bounded decimal results, including results longer than the new-input limit.
 
-<details>
-<summary><strong>Detailed arithmetic, input and range contracts</strong></summary>
-
-**Standard**
-
-- Leading zeros do not count toward the 100-digit mantissa limit; entered trailing zeros do. Excess precision is rejected. Pasting a copied result follows the new-input limit; recalling a stored result can exceed it.
-- Normalized coefficients are limited to **2,000 digits**, scale to **−1,000 through 2,000**, and nonzero adjusted decimal exponents to **−1,000 through +1,000**. `1e-1000` and `9e1000` are supported. Bounds apply to intermediate and final values; violations produce an error. Exact terminating division results need no padding.
-- Replacing a pending operator does not execute it. Repeated equals repeats the last operation/right operand. `200 − 10 % =` gives `180`; multiplication gives `20`; division gives `2000`.
-- A unary/percentage result is a complete operand; a new digit replaces it. A new digit after equals starts a calculation. Backspace edits only an editable input; CE preserves a pending operation, while C/Escape resets it.
-
-**Scientific**
-
-- Expressions are limited to **2,048 characters** and **64 recursive levels**. The parser does not execute scripts or dynamically evaluate code.
-- Factorial accepts integers **0–170**. `0^0` is rejected; `-2^2` is `-4`, and `2^-2` is `0.25`. Tangent is rejected near singularities when `|cos(angle)| < 10^-14`. Hyperbolic functions are dimensionless.
-- Binary64 rounding, cancellation and subnormal behavior apply. Invalid domains, nonfinite results, overflow and detected underflow produce readable errors.
-- Enter reevaluates the current expression. Keypad operators can continue from the last result; keypad numeric input after equals begins a fresh expression. Memory stores the decimal round-trip representation of the approximate result. Out-of-range or underflowing recall into Scientific is rejected.
-
-**Programmer**
-
-- Parsed out-of-range integers and all results are masked to the chosen width. Division truncates toward zero. Right shift is arithmetic when signed and logical when unsigned.
-- Shift counts must be `0..width−1`. Widening sign-extends negative signed values; narrowing masks. Changing width or signedness cancels a pending operation.
-- Binary display is grouped in four-bit blocks and padded to the word size. Incomplete input cannot copy a stale result.
-
-**Converter and Dates**
-
-- Valid identity conversions preserve the input after domain validation. Offset-free conversions use a direct scale ratio to avoid unnecessary intermediate overflow/underflow.
-- Factors distinguish the international foot/pound, thermochemical calorie, BTU (IT), mechanical/metric horsepower, and US/Imperial volume. A Julian year is exactly 365.25 days. A small negative base-temperature value caused by offset cancellation is clamped to absolute zero within four machine epsilons of the input offset; Kelvin input below zero is rejected.
-- Date differences are absolute and elapsed by default; inclusive counting adds one day. Interval adjustment applies years, then months, then weeks/days, clamping at each year/month boundary.
-
-**Result display**
-
-Results are selectable and read-only. Text fits and wraps; previous/next digit pages expose any remaining characters without scrollbars. Selecting text copies that selection; **Copy result** and history-card copy buttons preserve the complete stored value. Long expression captions may be abbreviated.
-
-</details>
+[Read the complete numeric reference](docs/numeric-behavior.md) for arithmetic bounds, input/state rules, domain errors, integer wrapping, calendar adjustment order and result-display behavior.
 
 <a id="readme-configuration"></a>
 
@@ -307,7 +289,10 @@ tests/
   ModernCalculator.UiChecks/        # Hidden controls, PNG snapshots and diagnostics
   ModernCalculator.DesktopAudit/    # Optional visible walkthrough with isolated state
 tools/                             # Icon generation and specialized audit packaging
-docs/images/                       # Existing logo and Aster GUI previews
+docs/
+  development.md                   # Build, tests, walkthroughs and packaging
+  numeric-behavior.md              # Engine precision and input/range contracts
+  images/                          # Existing logo and Aster GUI previews
 ```
 
 Original vector icons and a bundled multi-resolution executable icon provide the branding. [Generate-Icon.ps1](tools/Generate-Icon.ps1) regenerates the icon on Windows. The README logo is the existing icon's embedded 256-pixel PNG.
@@ -317,40 +302,22 @@ Original vector icons and a bundled multi-resolution executable icon provide the
 
 ## 🧪 Testing and development
 
-From the repository root, run the engine and persistence suite:
+Run the engine and persistence tests from the repository root:
 
 ```powershell
 dotnet test tests/ModernCalculator.Tests -c Release --logger "console;verbosity=minimal"
 ```
 
-Coverage includes decimal precision/state, scientific grammar/domains, base/bit operations, conversion round trips, date boundaries, culture-aware input, memory/history, undo/redo and persistence recovery. These tests do not open a window.
-
-Build and run the **Windows-only** hidden component harness:
+For hidden WinForms component checks, build and run the separate harness:
 
 ```powershell
 dotnet build tests/ModernCalculator.UiChecks -c Release -m:1
 dotnet run --project tests/ModernCalculator.UiChecks -c Release --no-build -- artifacts/UiChecks
 ```
 
-Every run creates a unique child directory containing `report.json`, `report.txt`, isolated state and PNGs. An optional second argument filters check names. The harness checks native control layout/rendering and handlers across modes, themes, minimum sizes and relative scale simulations.
+The engine suite checks calculation and persistence behavior. The Windows-only component executable checks hidden controls, handlers, layout and snapshots using isolated state. Its PNGs and scale simulations do not establish physical-input, window-manager, screen-reader or real monitor-transition behavior.
 
-It does not show windows, inject physical input, exercise the clipboard, change Windows DPI or verify screen-reader output. Desktop focus, window-manager composition and actual monitor/DPI transitions require interactive checks. The [component harness guide](tests/ModernCalculator.UiChecks/README.md) describes the methodology.
-
-For a **visible manual walkthrough** with fresh isolated state:
-
-```powershell
-dotnet run --project tests/ModernCalculator.DesktopAudit -c Release
-```
-
-DesktopAudit hosts the production MainForm and engines, sends no automated input and stores a fresh session beneath its output folder's `sessions/` directory. It is outside the solution, so this command builds it separately.
-
-<details>
-<summary><strong>📋 Existing audit-tooling documentation gaps</strong></summary>
-
-The component guide and specialized packaging script reference `docs/VERIFICATION.md`, `docs/INDEPENDENT_REVIEW.md` and `docs/AUDIT_RESOLUTION.md`, which are absent from this checkout. The packaging script also carries historical report-count defaults. Use the commands here for regular testing/publishing; do not treat those missing files or defaults as a current acceptance record.
-
-</details>
-
+Follow the [development guide](docs/development.md) for TRX reports, the visible `ModernCalculator.DesktopAudit` walkthrough and specialized packaging prerequisites. The [component-check guide](tests/ModernCalculator.UiChecks/README.md) explains filters, report fields and rendering limits. Use actual run reports rather than historical count defaults as evidence of a pass.
 
 <a id="readme-publishing"></a>
 
@@ -370,7 +337,7 @@ To bundle the runtime for **Windows x64** instead:
 dotnet publish src/ModernCalculator.WinForms -c Release -r win-x64 --self-contained true -o artifacts/publish/win-x64
 ```
 
-This may download the matching runtime pack. Both commands create local publish folders. Share the full output folder appropriate to the destination machine. The specialized [audit packaging script](tools/Package-Audited.ps1) expects prepared acceptance reports and matching published/tested binaries. Its default paths, test counts and audit-document references belong to a separate acceptance workflow; use the direct publish commands for a regular build.
+This may download the matching runtime pack. Both commands create local publish folders. Share the full output folder appropriate to the destination machine. The specialized [audit packaging script](tools/Package-Audited.ps1) expects prepared acceptance reports and matching published/tested binaries. Its default paths, test counts and missing historical audit-document references belong to a separate acceptance workflow, explained in [specialized audit packaging](docs/development.md#specialized-audit-packaging). Use the direct publish commands for a regular build.
 
 <a id="readme-troubleshooting"></a>
 
@@ -411,8 +378,9 @@ Aster Calculator is licensed under the **[MIT License](LICENSE)**. Copyright © 
 
 - [GitHub repository](https://github.com/gcfernando/aster)
 - [Report a problem or suggest an improvement](https://github.com/gcfernando/aster/issues)
+- [Development and testing guide](docs/development.md)
+- [Numeric behavior reference](docs/numeric-behavior.md)
 - [Windows component-check guide](tests/ModernCalculator.UiChecks/README.md)
 - [.NET 10 SDK and Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
 
 <p align="center"><a href="#readme-quick-start">🚀 Build Aster</a> · <a href="#readme-gui">🖥️ Explore Aster GUI</a> · <a href="#readme-configuration">🔐 Local data and preferences</a></p>
-
