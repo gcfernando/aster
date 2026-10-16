@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.Globalization;
 using System.Runtime.InteropServices;
 using ModernCalculator.Core.Calculations;
@@ -55,6 +56,7 @@ public sealed partial class MainForm
         return ActiveDescendant(control) is TextBoxBase box && box.SelectionLength > 0;
     }
     private InputFocusSnapshot CaptureInputFocus() => new(ActiveDescendant(ActiveControl));
+    // Restore focus only while the original control still belongs to the form and can accept it.
     private void RestoreInputFocus(InputFocusSnapshot snapshot)
     {
         if (snapshot.Control is { IsDisposed: false, Disposing: false } control && Contains(control) &&
@@ -98,6 +100,7 @@ public sealed partial class MainForm
     {
         return item.LocalizedResult(CultureInfo.CurrentCulture);
     }
+    // Reuse stored numeric text before display localization can change its interpretation.
     private void ReuseHistory(HistoryItem item)
     {
         if (Current is StandardView standard) standard.ReuseStoredResult(item.Result);

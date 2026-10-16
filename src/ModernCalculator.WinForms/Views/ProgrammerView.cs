@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.Globalization;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -229,6 +230,7 @@ public sealed class ProgrammerView : ModeView
         left = calculator.Value; pending = operation; replace = true; hasRightOperand = false;
         expression = $"{left} {OperationSymbol(operation)} … [DEC operands]";
     }
+    // Record a result only while a binary operation is pending.
     private void Evaluate()
     {
         if (pending is null) return;

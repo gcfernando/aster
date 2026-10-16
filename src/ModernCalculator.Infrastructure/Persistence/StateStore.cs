@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.Text.Json;
 using ModernCalculator.Core.History;
 using ModernCalculator.Core.Conversions;
@@ -24,6 +25,7 @@ public sealed class StateStore(string directory)
             if (state?.Settings is null || state.History is null) return Defaults("Saved preferences were incomplete; defaults are in use.");
             var settings = state.Settings.Validated();
             var journal = new HistoryJournal();
+            // Restore saved history only when validated preferences enable persistence.
             if (settings.PersistHistory) journal.Restore(state.History);
             return new(new(settings, journal.Items.ToArray(), ValidFavorites(state.ConversionFavorites)), null);
         }
@@ -40,6 +42,7 @@ public sealed class StateStore(string directory)
         {
             Directory.CreateDirectory(directory);
             var state = new SavedState(settings.Validated(), settings.PersistHistory ? history.Take(HistoryJournal.Capacity).ToArray() : [], ValidFavorites(conversionFavorites));
+            // Write beside the state file so replacement stays on the same filesystem.
             temporary = Path.Combine(directory, $"state.{Guid.NewGuid():N}.tmp");
             File.WriteAllText(temporary, JsonSerializer.Serialize(state, Options));
             File.Move(temporary, filePath, true);

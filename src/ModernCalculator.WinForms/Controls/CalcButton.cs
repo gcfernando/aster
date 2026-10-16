@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.Drawing.Drawing2D;
 using System.ComponentModel;
 using ModernCalculator.WinForms.Themes;
@@ -83,6 +84,7 @@ public sealed class CalcButton : Button, IThemedControl
         TextRenderer.DrawText(g, Text, Font, textRect, color,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
     }
+    // Draw arithmetic symbols as vectors so their appearance does not depend on the font.
     private void DrawOperator(Graphics graphics, char symbol, Color color)
     {
         var scale = DeviceDpi / 96f; var x = Width / 2f; var y = Height / 2f;

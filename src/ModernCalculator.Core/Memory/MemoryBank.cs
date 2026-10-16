@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using ModernCalculator.Core.Calculations;
 
 namespace ModernCalculator.Core.Memory;
@@ -22,6 +23,7 @@ public sealed class MemoryBank
         if (items.Count > Capacity) items.RemoveAt(items.Count - 1);
     }
     public void Add(decimal value) => Add(BigDecimal.FromDecimal(value));
+    // Calculate the replacement first so a failed addition leaves the stored slot intact.
     public void Add(BigDecimal value)
     {
         if (items.Count == 0) Store(value);

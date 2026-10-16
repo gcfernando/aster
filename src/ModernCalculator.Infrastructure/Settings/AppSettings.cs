@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 namespace ModernCalculator.Infrastructure.Settings;
 
 public enum ThemePreference { System, Dark, Light }
@@ -16,6 +17,7 @@ public sealed record AppSettings
     public DensityPreference Density { get; init; }
     public ModeShortcutPreference ModeShortcuts { get; init; }
     public string Mode { get; init; } = "Standard";
+    // Replace invalid saved options before the UI consumes them.
     public AppSettings Validated() => this with
     {
         Theme = Enum.IsDefined(Theme) ? Theme : ThemePreference.Dark,

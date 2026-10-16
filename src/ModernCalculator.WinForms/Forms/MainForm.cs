@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.Globalization;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
@@ -115,6 +116,7 @@ public sealed partial class MainForm : BorderlessForm, ITooltipHost
     {
         if (!views.ContainsKey(name)) return;
         keyboardActionNavigation = false;
+        // Detach cached views without disposing them so mode changes preserve session input.
         viewHost.Controls.Clear(); mode = name; viewHost.Controls.Add(Current);
         var index = Array.IndexOf(new[] { "Standard", "Scientific", "Programmer", "Converter", "Dates" }, name);
         if (modeNavigation.SelectedIndex != index) modeNavigation.SelectedIndex = index;
@@ -197,6 +199,7 @@ public sealed partial class MainForm : BorderlessForm, ITooltipHost
         var inputFocus = CaptureInputFocus();
         using var settingsForm = new SettingsForm(context.Settings, palette) { Icon = Icon };
         var result = settingsForm.ShowDialog(this);
+        // Apply the preferences draft only after the dialog is accepted.
         if (result == DialogResult.OK)
         {
             context.Settings = settingsForm.Result;

@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.Globalization;
 using ModernCalculator.Core.Calculations;
 using ModernCalculator.Core.Conversions;
@@ -160,6 +161,7 @@ public sealed class ConverterView : ModeView
         Context.Status("Units swapped. The entered value is unchanged.");
     }
 
+    // Refresh live results freely; only explicit saves append a history entry.
     private void Convert(bool record)
     {
         if (updating || from.SelectedItem is not UnitDefinition source || to.SelectedItem is not UnitDefinition target) return;

@@ -1,3 +1,4 @@
+# Developer ::> Gehan Fernando
 param(
     [Parameter(Mandatory = $true)][string]$UiReport,
     [string]$EngineReport = 'artifacts/TestResults/audit-final.trx',
@@ -17,6 +18,7 @@ foreach ($archivePath in @($runtimeArchive, $sourceArchive)) {
 }
 $uiReportPath = [IO.Path]::GetFullPath((Join-Path $projectRoot $UiReport))
 $engineReportPath = [IO.Path]::GetFullPath((Join-Path $projectRoot $EngineReport))
+# Check acceptance reports before packaging release files.
 $uiResult = Get-Content -LiteralPath $uiReportPath -Raw | ConvertFrom-Json
 [xml]$engineResult = Get-Content -LiteralPath $engineReportPath -Raw
 if ($uiResult.failed -ne 0 -or $uiResult.skipped -ne 0 -or $uiResult.focus -ne '' -or $uiResult.passed -lt $MinimumUiChecks) { throw 'A complete passing UI report is required.' }
@@ -88,6 +90,7 @@ $sourceEntries += [pscustomobject]@{ Source = $engineReportPath; Entry = 'verifi
 $sourceEntries = @($sourceEntries | Sort-Object Entry)
 $sourceEntries.Entry | Set-Content -LiteralPath (Join-Path $projectRoot "artifacts/$editionName-source-file-manifest.txt") -Encoding utf8
 
+# Verify every archived entry against its source before reporting success.
 function Write-VerifiedArchive([string]$ArchivePath, [array]$Entries) {
     if (Test-Path -LiteralPath $ArchivePath) { throw "Archive already exists; preserve it before regenerating: $ArchivePath" }
     $stream = [IO.File]::Open($ArchivePath, [IO.FileMode]::CreateNew)

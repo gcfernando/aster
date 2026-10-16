@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using ModernCalculator.Core.Calculations;
 using ModernCalculator.WinForms.Controls;
 using ModernCalculator.WinForms.Themes;
@@ -63,6 +64,7 @@ public abstract class ModeView : UserControl, IThemedControl
             foreach (Control button in row.Controls) if (button.AccessibleName is "Recall newest memory" or "Clear all memory") button.Enabled = count > 0;
             row.AccessibleDescription = $"{count} stored memory values. MA means all memory, MR recall, MS store, M+ add, M− subtract, MC clear.";
         }
+        // Release the context subscription when the memory row is disposed.
         Context.MemoryChanged += UpdateMemory; row.Disposed += (_, _) => Context.MemoryChanged -= UpdateMemory; UpdateMemory();
         var sizing = false;
         row.Layout += (_, _) =>

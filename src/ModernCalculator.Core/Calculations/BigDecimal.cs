@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.Globalization;
 using System.Numerics;
 
@@ -25,6 +26,7 @@ public readonly struct BigDecimal : IEquatable<BigDecimal>, IComparable<BigDecim
     {
         if (coefficient.IsZero) { Coefficient = BigInteger.Zero; Scale = 0; return; }
         if (scale is < -4000 or > 4000) throw RangeError();
+        // Remove trailing coefficient zeros before enforcing the normalized range.
         while (coefficient % 10 == 0) { coefficient /= 10; scale--; }
         var digits = Digits(coefficient);
         var exponent = (long)digits - scale - 1;
@@ -116,6 +118,7 @@ public readonly struct BigDecimal : IEquatable<BigDecimal>, IComparable<BigDecim
         var shift = resultScale + right.Scale - left.Scale;
         if (shift >= 0) numerator *= Power(shift); else denominator *= Power(-shift);
         var quotient = BigInteger.DivRem(numerator, denominator, out var remainder);
+        // Compare twice the remainder to round midpoint ties toward an even quotient.
         var comparison = (remainder * 2).CompareTo(denominator);
         if (comparison > 0 || comparison == 0 && !quotient.IsEven) quotient++;
         return new(left.Sign * right.Sign * quotient, resultScale);
@@ -146,6 +149,7 @@ public readonly struct BigDecimal : IEquatable<BigDecimal>, IComparable<BigDecim
         var denominator = BigInteger.One;
         if (shift >= 0) numerator *= Power(shift); else denominator = Power(-shift);
         var root = IntegerSquareRoot(numerator / denominator);
+        // Compare the squared midpoint exactly so root rounding avoids floating-point error.
         var comparison = (4 * numerator).CompareTo(denominator * BigInteger.Pow(2 * root + 1, 2));
         if (comparison > 0 || comparison == 0 && !root.IsEven) root++;
         return new(root, scale);

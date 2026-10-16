@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 namespace ModernCalculator.Core.Modes;
 
 public sealed record DateDifference(int TotalDays, int Years, int Months, int Days)
@@ -20,6 +21,7 @@ public static class DateCalculator
         return new(end.DayNumber - start.DayNumber, years, months, end.DayNumber - cursor.AddMonths(months).DayNumber);
     }
 
+    // Apply years and months before day offsets so month-end clamping follows DateOnly.
     public static DateOnly Add(DateOnly start, int years, int months, int weeks, int days) =>
         start.AddYears(years).AddMonths(months).AddDays(checked(weeks * 7 + days));
 }

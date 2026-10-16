@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 namespace ModernCalculator.Core.Calculations;
 
 public enum BinaryOperation { Add, Subtract, Multiply, Divide }
@@ -23,6 +24,7 @@ public sealed class StandardCalculator
     public bool IsEditing => !replaceEntry && Error is null;
     public event Action<CompletedCalculation>? CalculationCompleted;
 
+    // Capture pending and repeated operations together so undo restores the full calculation.
     public StandardCalculator Snapshot() => new()
     {
         Entry = Entry, Expression = Expression, Error = Error, accumulator = accumulator, pending = pending,
@@ -103,6 +105,7 @@ public sealed class StandardCalculator
         var operation = pending ?? repeatedOperation;
         if (operation is null) return;
         var left = pending.HasValue ? accumulator ?? ExactValue : ExactValue;
+        // Reuse the saved right operand when equals repeats the last completed operation.
         var right = pending.HasValue ? ExactValue : repeatedOperand;
         var result = Calculate(left, right, operation.Value);
         Expression = $"{Invariant(left)} {Symbol(operation.Value)} {Invariant(right)} =";

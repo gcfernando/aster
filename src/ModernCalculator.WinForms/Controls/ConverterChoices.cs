@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.ComponentModel;
 using System.Globalization;
 using System.Text;
@@ -126,6 +127,7 @@ public sealed class ConverterChoiceBrowser : UserControl, IThemedControl
         RenderChoices();
     }
 
+    // Rank exact symbol matches ahead of names while requiring every search token.
     private void Filter()
     {
         var query = UnitSearch.Normalize(search.Text);

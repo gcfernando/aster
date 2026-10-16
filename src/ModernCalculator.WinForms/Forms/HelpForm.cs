@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using ModernCalculator.Infrastructure.Settings;
 using ModernCalculator.WinForms.Controls;
 using ModernCalculator.WinForms.Themes;
@@ -72,6 +73,7 @@ public sealed class HelpForm : BorderlessForm
         ResumeLayout(true); Rebuild(); Ui.Theme(this, palette);
     }
     private bool rebuilding;
+    // Adjust the number of help items per page to keep every topic reachable without scrolling.
     private void Rebuild()
     {
         if (rebuilding || IsDisposed) return; rebuilding = true;

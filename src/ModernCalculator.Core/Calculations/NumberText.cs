@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.Globalization;
 using System.Numerics;
 
@@ -43,6 +44,7 @@ public static class NumberText
         var normalized = group.Length > 0 ? mantissa.Replace(group, "", StringComparison.Ordinal) : mantissa;
         normalized = normalized.Replace(format.NumberDecimalSeparator, ".", StringComparison.Ordinal);
         if (exponentIndex >= 0) normalized += "e" + exponent;
+        // Check input precision before normalization can discard entered trailing zeros.
         return SignificantInputDigits(normalized) <= BigDecimal.Precision && BigDecimal.TryParse(normalized, out value);
     }
 

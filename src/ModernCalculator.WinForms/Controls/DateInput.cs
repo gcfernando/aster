@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.ComponentModel;
 using System.Globalization;
 using ModernCalculator.WinForms.Themes;
@@ -37,6 +38,7 @@ public sealed class DateInput : UserControl, IThemedControl
         editor.KeyDown += (_, e) => { if (e.Alt && e.KeyCode == Keys.Down) { CalendarRequested?.Invoke(this, EventArgs.Empty); e.Handled = e.SuppressKeyPress = true; } };
         ResumeLayout(true);
     }
+    // Parse ISO dates independently of the region's default calendar.
     public bool TryGetDate(out DateOnly date) => DateOnly.TryParseExact(editor.Text.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
     public DateOnly ReadDate() => TryGetDate(out var date) ? date : throw new FormatException("Enter a valid date in YYYY-MM-DD format (years 0001–9999).");
     public void SetDate(DateOnly date) => editor.Text = date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);

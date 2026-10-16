@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.Globalization;
 using ModernCalculator.Core.Calculations;
 using ModernCalculator.WinForms.Controls;
@@ -73,6 +74,7 @@ public sealed class StandardView : ModeView
     public void ReuseStoredResult(string value) => Execute(() => calculator.SetValue(BigDecimal.Parse(value)));
     private void Execute(Action action)
     {
+        // Capture the full engine state before each action and discard the redo branch.
         undo.Push(calculator.Snapshot()); if (undo.Count > 100) { var retained = undo.Take(100).Reverse().ToArray(); undo.Clear(); foreach (var item in retained) undo.Push(item); }
         redo.Clear();
         var succeeded = false;

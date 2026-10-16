@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.ComponentModel;
 using System.Globalization;
 using ModernCalculator.WinForms.Themes;
@@ -55,6 +56,7 @@ public sealed class FlatNumberInput : UserControl, IThemedControl
         editor.TextChanged += (_, _) =>
         {
             if (updating) return;
+            // Keep incomplete editor text without replacing the last valid numeric value.
             if (TryGetValue(out var entered)) { var changed = value != entered; value = entered; if (changed) ValueChanged?.Invoke(this, EventArgs.Empty); }
             UpdateButtons(); InputChanged?.Invoke(this, EventArgs.Empty); Invalidate();
         };

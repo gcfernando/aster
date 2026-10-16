@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.Globalization;
 using ModernCalculator.WinForms.Controls;
 
@@ -34,6 +35,7 @@ public sealed partial class MainForm
         }, ButtonTone.Quiet, IconKind.Trash);
         Ui.SetFont(clearJournal, 9); drawer.Controls.Add(clearJournal, 0, 4);
     }
+    // Show one stored result at a time so long values remain reachable in the fixed drawer.
     private void RefreshDrawer()
     {
         if (clearJournal is null) return;

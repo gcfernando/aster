@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.Globalization;
 using ModernCalculator.Core.Calculations;
 using ModernCalculator.Core.Expressions;
@@ -219,12 +220,14 @@ public sealed class ScientificView : ModeView
             default: Insert(label); break;
         }
     });
+    // Evaluate uncached input before capturing its round-trip value for memory.
     private BigDecimal CurrentExact()
     {
         var value = hasResult && error is null ? result : EvaluateExpression();
         return BigDecimal.Parse(value.ToString("G17", CultureInfo.InvariantCulture));
     }
     private AngleUnit Angle => angles.SelectedIndex == 0 ? AngleUnit.Degrees : AngleUnit.Radians;
+    // Invalidate copyable output after expression or angle-unit changes.
     private void InvalidateResult() { afterEquals = false; error = null; hasResult = false; RefreshFormatting(); Context.Status("Press Enter to evaluate · Scientific uses 15-digit floating-point precision"); }
     private void Clear() { expression.Clear(); result = 0; error = null; hasResult = false; afterEquals = false; RefreshFormatting(); expression.Focus(); }
     private void Insert(string text)

@@ -1,3 +1,4 @@
+# Developer ::> Gehan Fernando
 param([string]$OutputPath = (Join-Path $PSScriptRoot '..\src\ModernCalculator.WinForms\Resources\aster.ico'))
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
@@ -38,6 +39,7 @@ $file = [System.IO.File]::Create([System.IO.Path]::GetFullPath($OutputPath))
 $writer = [System.IO.BinaryWriter]::new($file)
 try {
     $writer.Write([uint16]0); $writer.Write([uint16]1); $writer.Write([uint16]$sizes.Count)
+    # ICO image offsets begin after the header and fixed-size directory entries.
     $offset = 6 + 16 * $sizes.Count
     for ($i = 0; $i -lt $sizes.Count; $i++) {
         $dimension = if ($sizes[$i] -eq 256) { 0 } else { $sizes[$i] }

@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 namespace ModernCalculator.WinForms.Forms;
 
 public sealed record WindowMetrics(Size InitialSize, Size MinimumSize);

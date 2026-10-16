@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.Globalization;
 using ModernCalculator.Core.Calculations;
 
@@ -30,6 +31,7 @@ public sealed class HistoryJournal
         item.Result.Contains(query, StringComparison.CurrentCultureIgnoreCase) ||
         item.LocalizedResult(CultureInfo.CurrentCulture).Contains(query, StringComparison.CurrentCultureIgnoreCase) ||
         item.Mode.Contains(query, StringComparison.CurrentCultureIgnoreCase));
+    // Discard malformed or duplicate saved entries before applying the journal limit.
     public void Restore(IEnumerable<HistoryItem> saved)
     {
         items.Clear();

@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 namespace ModernCalculator.WinForms.Controls;
 
 /// <summary>Owns one fitted font per control; the requested point size remains the upper bound.</summary>
@@ -48,6 +49,7 @@ internal sealed class FittedText : IDisposable
             pointSize = Math.Max(8, pointSize - .5f);
         }
         if (control.Font.SizeInPoints == pointSize && control.Font.Name == family && control.Font.Style == style) return;
+        // Guard font replacement because assigning Font also raises FontChanged.
         changing = true;
         try
         {

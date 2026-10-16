@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.Globalization;
 using System.Numerics;
 using ModernCalculator.Core.Calculations;
@@ -17,6 +18,7 @@ public sealed class ProgrammerCalculator
     public void SetWidth(int width)
     {
         if (width is not (8 or 16 or 32 or 64)) throw new ArgumentOutOfRangeException(nameof(width));
+        // Capture the numeric value so widening a signed word preserves negative numbers.
         var previous = Value;
         Width = width;
         SetValue(previous);
@@ -66,6 +68,7 @@ public sealed class ProgrammerCalculator
     public void Apply(IntegerOperation operation, BigInteger operand)
     {
         var left = Value;
+        // Interpret both operands using the same word width and signedness.
         var rightBits = operand & Mask;
         var right = Signed && (rightBits & (BigInteger.One << (Width - 1))) != 0 ? rightBits - (BigInteger.One << Width) : rightBits;
         var result = operation switch

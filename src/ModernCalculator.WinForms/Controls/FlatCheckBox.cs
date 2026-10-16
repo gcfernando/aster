@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using ModernCalculator.WinForms.Themes;
 using System.Drawing.Drawing2D;
 

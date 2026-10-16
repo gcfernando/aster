@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.Globalization;
 using System.Text.RegularExpressions;
 using ModernCalculator.Core.Calculations;
@@ -19,6 +20,7 @@ public static partial class ScientificEditing
     {
         if (!AnswerToken().IsMatch(expression)) return expression;
         if (answer is null) throw new CalculationException("Ans is available after the first successful calculation.");
+        // Wrap the stored answer so its sign and precedence survive substitution.
         var literal = "(" + ExpressionLiteral(answer.Value, culture) + ")";
         return AnswerToken().Replace(expression, _ => literal);
     }

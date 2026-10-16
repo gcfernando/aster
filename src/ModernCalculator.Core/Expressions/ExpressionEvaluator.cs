@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.Globalization;
 using ModernCalculator.Core.Calculations;
 
@@ -82,6 +83,7 @@ public sealed class ExpressionEvaluator
         private double Power()
         {
             var result = Postfix();
+            // Parse the exponent recursively so chained powers associate from right to left.
             return Take('^') ? Pow(result, Unary()) : result;
         }
 
@@ -124,6 +126,7 @@ public sealed class ExpressionEvaluator
             var literal = text[start..position].Replace(decimalSeparator, '.');
             if (!double.TryParse(literal, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))
                 throw Fail("A number, constant or function was expected.");
+            // Reject nonzero literals that binary64 parsing would silently underflow to zero.
             if (value == 0 && literal.Split('e', 'E')[0].Any(c => c is >= '1' and <= '9'))
                 throw Fail("This literal is too small for floating-point arithmetic.");
             return Finite(value);

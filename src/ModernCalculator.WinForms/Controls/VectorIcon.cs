@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.Drawing.Drawing2D;
 
 namespace ModernCalculator.WinForms.Controls;

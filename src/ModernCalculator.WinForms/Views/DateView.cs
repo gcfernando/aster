@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.Globalization;
 using ModernCalculator.Core.Modes;
 using ModernCalculator.WinForms.Controls;
@@ -146,6 +147,7 @@ public sealed class DateView : ModeView
         updating = true; try { starting.SetDate(Today); operation.SelectedIndex = 0; foreach (var field in new[] { years, months, weeks, days }) field.Value = 0; } finally { updating = false; }
         Adjust(false); starting.FocusInput(); Context.Status("Date adjustment reset to today with a zero interval.");
     }
+    // Keep live previews out of history unless the caller requests a saved result.
     private void EvaluateCurrent(bool record) { if (workflow.SelectedIndex == 0) Difference(record); else Adjust(record); }
     private void Difference(bool record)
     {

@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.ComponentModel;
 using ModernCalculator.WinForms.Themes;
 
@@ -17,6 +18,7 @@ public sealed class SegmentedControl : UserControl, IThemedControl
         {
             if (value < 0 || value >= segments.Count) throw new ArgumentOutOfRangeException(nameof(value));
             if (selectedIndex == value && segments[value].Checked) return;
+            // Update every radio state before raising one selection-change event.
             selectedIndex = value; updating = true;
             for (var i = 0; i < segments.Count; i++) { segments[i].Checked = i == value; segments[i].TabStop = i == value; segments[i].Invalidate(); }
             updating = false; SelectedIndexChanged?.Invoke(this, EventArgs.Empty);

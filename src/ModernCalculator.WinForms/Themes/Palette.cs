@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using Microsoft.Win32;
 using ModernCalculator.Infrastructure.Settings;
 
@@ -8,6 +9,7 @@ public sealed record Palette(Color Window, Color Surface, Color Key, Color Numbe
 {
     public static Palette Resolve(ThemePreference preference, bool highContrast = false)
     {
+        // Resolve system contrast colors before applying the requested light or dark theme.
         if (SystemInformation.HighContrast || highContrast)
             return new(SystemColors.Window, SystemColors.Control, SystemColors.Control, SystemColors.Control,
                 SystemColors.WindowText, SystemColors.WindowText, SystemColors.WindowText, SystemColors.Highlight,

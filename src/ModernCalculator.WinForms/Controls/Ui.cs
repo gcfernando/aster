@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using ModernCalculator.WinForms.Themes;
 using System.Runtime.CompilerServices;
 
@@ -45,6 +46,7 @@ public static class Ui
         control.Font = font;
         FittedText.Request(control, font);
     }
+    // Share fonts within one control and release them when that control is disposed.
     private sealed class FontCache
     {
         private readonly Dictionary<(string Family, float Size, FontStyle Style), Font> values = [];

@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.Runtime.InteropServices;
 using ModernCalculator.WinForms.Controls;
 using ModernCalculator.WinForms.Themes;
@@ -16,6 +17,7 @@ public class BorderlessForm : Form
         SetStyle(ControlStyles.ResizeRedraw | ControlStyles.OptimizedDoubleBuffer, true);
         Padding = new(6);
     }
+    // Retain native window styles while drawing the frame in the client area.
     protected override CreateParams CreateParams
     {
         get

@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using ModernCalculator.Infrastructure.Settings;
 using ModernCalculator.WinForms.Controls;
 using ModernCalculator.WinForms.Themes;
@@ -102,6 +103,7 @@ public sealed class SettingsForm : BorderlessForm
     }
     private static TableLayoutPanel Page(int rows) => Ui.Table(1, Enumerable.Repeat(-1f, rows).ToArray());
     private static IEnumerable<Control> Descendants(Control control) { foreach (Control child in control.Controls) { yield return child; foreach (var nested in Descendants(child)) yield return nested; } }
+    // Stage history clearing here; the main form applies it only after preferences are saved.
     private void StageClearHistory()
     {
         if (ClearHistoryRequested) { ClearHistoryRequested = confirmingClear = false; clearHistory.Text = "Clear saved history"; clearNote.Text = "History will be kept."; }

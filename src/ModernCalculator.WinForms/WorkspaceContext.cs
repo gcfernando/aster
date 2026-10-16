@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using ModernCalculator.Core.History;
 using ModernCalculator.Core.Memory;
 using ModernCalculator.Infrastructure.Settings;
@@ -21,6 +22,7 @@ public sealed class WorkspaceContext
     { favorites.Clear(); favorites.AddRange(pairs.Distinct().Take(20)); ConversionFavoritesChanged?.Invoke(); }
     public void ToggleConversionFavorite(string category, string fromUnit, string toUnit)
     {
+        // Identify a favorite by its category and ordered source/destination pair.
         var pair = new ConversionFavorite(category, fromUnit, toUnit);
         if (!favorites.Remove(pair)) { favorites.Insert(0, pair); if (favorites.Count > 20) favorites.RemoveAt(20); }
         ConversionFavoritesChanged?.Invoke();

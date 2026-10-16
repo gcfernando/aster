@@ -1,3 +1,4 @@
+// Developer ::> Gehan Fernando
 using System.Globalization;
 using ModernCalculator.WinForms.Themes;
 
@@ -95,6 +96,7 @@ public sealed class DateCalendarPanel : UserControl, IThemedControl
         try { month = month.AddMonths(amount); cursor = new(month.Year, month.Month, Math.Min(cursor.Day, DateTime.DaysInMonth(month.Year, month.Month))); RefreshMonth(); }
         catch (ArgumentOutOfRangeException) { }
     }
+    // Browse weeks without forcing the page back to the keyboard cursor.
     private void ChangeWeekPage(int direction) { weekPage = Math.Clamp(weekPage + direction, 0, (6 / weeksPerPage) - 1); RefreshMonth(false); }
     private void RefreshMonth(bool exposeCursor = true)
     {
