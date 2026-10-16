@@ -1,136 +1,351 @@
-# Aster Calculator
+<p align="center">
+  <img src="docs/images/aster.png" width="72" height="72" alt="Aster's blue four-point star logo">
+</p>
 
-A native Windows calculator built with C# 14, .NET 10 and Windows Forms. Aster uses flat paper/charcoal surfaces, a blue accent, compact horizontal navigation with original vector icons, and selectable numeric results across five modes. The borderless window has custom minimize, maximize/restore and close controls, native window dragging and edge/corner resizing. All calculation features work offline. Calculator options use visible buttons, radio segments and paged unit choices; there are no application dropdowns, popup function menus or scrolling panels.
+# Aster · Offline Windows Calculator
 
-## Build and run
+<p align="center"><strong>A thoughtful space for everyday calculation.</strong></p>
 
-Requirements: Windows 10/11 and the **.NET 10 SDK**. For the Visual Studio designer/build tools, use **Visual Studio 2026 (18+)** with the **.NET desktop development** workload. Visual Studio 2022 cannot officially target .NET 10; see [Microsoft's SDK/Visual Studio compatibility documentation](https://learn.microsoft.com/en-us/dotnet/core/porting/versioning-sdk-msbuild-vs).
+**Aster is an offline Windows calculator built with C# 14, .NET 10 and Windows Forms.** It brings exact decimal arithmetic, scientific expressions, programmer tools, unit conversions and date calculations into one native desktop app. Use it for everyday percentages, scientific formulas, bit manipulation or calendar arithmetic, with searchable history and reusable results close at hand.
 
-Open `ModernCalculator.sln`. In **Solution Explorer**, right-click **ModernCalculator.WinForms** and select **Set as Startup Project**, then press **F5**. The Start dropdown should show `ModernCalculator.WinForms`, not `ModernCalculator.Core`. The executable project appears first in the solution file for fresh opens; Visual Studio can retain a previously selected startup project in its per-user settings.
+<p align="center">
+  <a href="https://dotnet.microsoft.com/en-us/download/dotnet/10.0"><img src="https://img.shields.io/badge/.NET-10-512BD4?style=flat-square" alt=".NET 10"></a>
+  <a href="Directory.Build.props"><img src="https://img.shields.io/badge/C%23-14-239120?style=flat-square" alt="C# 14"></a>
+  <a href="src/ModernCalculator.WinForms/ModernCalculator.WinForms.csproj"><img src="https://img.shields.io/badge/Desktop-Windows%20Forms-1969EC?style=flat-square" alt="Windows Forms desktop app"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-64748B?style=flat-square" alt="MIT license"></a>
+</p>
 
-If Visual Studio reports that a class library cannot be started directly, dismiss the message and select `ModernCalculator.WinForms` as described above. Core and Infrastructure are libraries used by the app and should keep their library output type. See [Microsoft's instructions for running a multi-project solution](https://learn.microsoft.com/en-us/visualstudio/get-started/csharp/run-program?view=visualstudio).
+<p align="center">
+  <a href="#readme-quick-start">Quick start</a> ·
+  <a href="#readme-features">Features</a> ·
+  <a href="#readme-usage">Usage</a> ·
+  <a href="#readme-numeric-behavior">Numeric behavior</a> ·
+  <a href="#readme-development">Development</a> ·
+  <a href="#readme-publishing">Publishing</a>
+</p>
 
-Or run from this directory:
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/scientific-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/images/scientific-light.png">
+    <img src="docs/images/scientific-light.png" width="680" alt="Aster scientific calculator with an editable expression, DEG/RAD controls, function banks and session memory">
+  </picture>
+</p>
+
+<p align="center"><em>Scientific mode in light and dark themes. Previews are rendered from the application's native controls.</em></p>
+
+<a id="readme-features"></a>
+
+## Five calculator modes ✨
+
+| Mode | What you can do |
+| --- | --- |
+| **Standard** | Enter up to **100 significant decimal digits**; calculate percentages, squares, roots and reciprocals; repeat equals; undo and redo calculator actions. |
+| **Scientific** | Edit expressions with precedence, parentheses, right-associative powers, roots, factorials, logarithms, trig and hyperbolic functions. Switch DEG/RAD and reuse the last answer with `Ans`. |
+| **Programmer** | Edit synchronized **DEC / HEX / OCT / BIN** representations; choose 8/16/32/64-bit signed or unsigned arithmetic; apply bitwise operations and shifts; toggle individual bits. |
+| **Converter** | Convert across **12 unit categories**, search names/symbols/aliases, swap units, save favorite pairs and restore recent conversions. |
+| **Dates** | Compare two dates using elapsed or inclusive counting, inspect a calendar breakdown, or add/subtract signed years, months, weeks and days. |
+
+The unit converter includes **length, mass, temperature, area, volume, time, speed, data storage, energy, power, pressure and angles**. US/Imperial volumes and decimal/binary data prefixes are explicitly distinguished; currency conversion is not included.
+
+Shared across the workspace:
+
+- **History and memory:** search up to 200 calculations, copy or reuse results, and keep up to 20 exact decimal memory slots during a session.
+- **Selectable results:** select text directly; explicit digit pages expose long results, while **Copy result** preserves the full stored value.
+- **Appearance controls:** light, dark or system theme; Automatic/Compact density; reduced hover motion; system high-contrast colors; always-on-top.
+- **Native window behavior:** drag the header, resize edges/corners and maximize/restore within the monitor's working area. Controls use visible segments and pages without application dropdowns or scrolling panels.
+- **Offline operation:** calculation features require no account, telemetry service, network connection or live-rate service.
+
+<details>
+<summary><strong>View Standard, Programmer, Converter and Dates previews</strong></summary>
+
+| Standard · light | Programmer · dark |
+| :---: | :---: |
+| ![Standard calculator with decimal keypad and memory controls above the keys](docs/images/standard-light.png) | ![Programmer calculator showing decimal, hexadecimal, octal and binary rows with word-size and bit-editor controls](docs/images/programmer-dark.png) |
+
+| Converter · light | Dates · dark |
+| :---: | :---: |
+| ![Unit converter showing one metre as 0.001 kilometres, searchable unit choices and save actions](docs/images/converter-light.png) | ![Date calculator with two ISO date inputs, inline calendar controls and elapsed or inclusive counting](docs/images/dates-dark.png) |
+
+These are hidden WinForms **component snapshots**, generated by the repository's UI checks. They show the client layout; they do not capture desktop composition, native monitor transitions or physical input.
+
+</details>
+
+<a id="readme-quick-start"></a>
+
+## Quick start 🚀
+
+### Prerequisites
+
+- **Windows** with .NET 10 support. See Microsoft's [Windows version and edition support matrix](https://learn.microsoft.com/en-us/dotnet/core/install/windows).
+- The **[.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)** to build from source. [global.json](global.json) requests `10.0.100` with `latestFeature` roll-forward, allowing later installed .NET 10 feature bands.
+- **Git** to use the clone command below.
+- Optional: **Visual Studio 2026 (18+)** with the **.NET desktop development** workload. Microsoft documents [.NET SDK and Visual Studio compatibility](https://learn.microsoft.com/en-us/dotnet/core/porting/versioning-sdk-msbuild-vs); Visual Studio 2022 does not officially support targeting .NET 10.
+
+### Build and launch
+
+Run these commands in PowerShell:
 
 ```powershell
+git clone https://github.com/gcfernando/aster.git
+cd aster
 dotnet restore ModernCalculator.sln
 dotnet build ModernCalculator.sln -c Release -m:1
 dotnet run --project src/ModernCalculator.WinForms -c Release --no-build
 ```
 
-`global.json` accepts the latest installed .NET 10 feature band at or above 10.0.100. Application code has no third-party dependencies. Only the test project restores NuGet packages.
+A fresh profile opens a centered, light-theme **Standard** calculator with history collapsed. Enter `0.1 + 0.2` and press **Enter**; Standard returns exactly `0.3` (shown with your regional decimal separator).
 
-## Modes
+For Visual Studio, open [ModernCalculator.sln](ModernCalculator.sln), right-click **ModernCalculator.WinForms** in Solution Explorer, select **Set as Startup Project**, then press **F5**. Core and Infrastructure are class libraries.
 
-| Mode | Included behavior |
+Application projects have **no third-party package dependencies**. Only the xUnit test project declares NuGet package references. Initial restore and downloading an SDK/runtime can require internet access; calculations run offline.
+
+<a id="readme-usage"></a>
+
+## Usage 🧮
+
+### Everyday arithmetic and scientific expressions
+
+Standard executes each pending operation immediately: `2 + 3 × 4 =` produces **20**. Scientific applies precedence and produces **14** for the same expression. In Standard, `200 + 10 % =` produces **220**; Scientific and Programmer use `%` for **remainder**.
+
+Select **Scientific**, type an expression and press Enter:
+
+| Expression | Result or behavior |
 | --- | --- |
-| Standard | 100-digit decimal input, exact bounded arithmetic, persistent expression, immediate execution, percentages, square/root/reciprocal, sign, CE/C, backspace, repeated equals, memory, undo/redo |
-| Scientific | Editable expressions, operand templates, Ans, precedence, right-associative powers, roots, factorial, constants, logarithms, trig/inverse trig, hyperbolic/inverse hyperbolic functions, degrees/radians, exponent notation |
-| Programmer | Editable selected-base representation, synchronized DEC/HEX/OCT/BIN, 8/16/32/64-bit integers, signed/unsigned wrapping arithmetic, bitwise operations, shifts, remainder, paged bit editor |
-| Converter | Twelve categories, paired value/unit groups, searchable names/symbols/aliases, live results, favorites, recent conversions, swapping and explicit history saving |
-| Dates | Live elapsed or inclusive difference, calendar breakdown, inline calendars, Today/Swap/Reset, signed interval adjustment and month-end clamping |
+| `sqrt(144) + 2^3` | `20` |
+| `sin(30) + logbase(81,3)` | Approximately `4.5` in DEG mode |
+| `root(-32,5)` | `-2` |
+| `2^3^2` | `512` — powers associate right to left |
+| `asinh(2) + acosh(3) + atanh(0.5)` | Evaluates the inverse hyperbolic functions |
 
-Scientific functions are available on the keypad, in the visible **Powers & logs / Trigonometry / Hyperbolic** banks, and by typing:
+Use explicit multiplication, such as `2*pi`. Dot-decimal locales use commas between function arguments; comma-decimal locales use semicolons, such as `logbase(81;3)`. Scientific literals accept a dot or the current decimal separator, and exclude grouping separators. Choose **Powers & logs**, **Trigonometry** or **Hyperbolic** for visible function buttons.
 
-```text
-sqrt(144) + 2^3
-sin(30) + logbase(81,3)
-root(-32,5)
-asinh(2) + acosh(3) + atanh(0.5)
-```
+Scientific expressions stay editable after equals. Editing the expression or changing DEG/RAD invalidates the old result until you evaluate again. `Ans` retains the last successful answer.
 
-In comma-decimal cultures, use `;` between function arguments: `logbase(81;3)`. Decimal input accepts the locale separator; scientific expression literals also accept a dot. Grouping separators are intentionally excluded from scientific expressions to keep argument syntax unambiguous. Use explicit multiplication (`2*pi`, not `2pi`). `%` means remainder in Scientific and Programmer; Standard uses percentage semantics.
+### Programmer, conversion and date workflows
 
-Standard places its memory bar above the keypad; Scientific places it below the keypad. Both provide **MA**, **MR**, **MS**, **M+**, **M−** and **MC**. MA opens all memory slots in the secondary panel, MS creates a new slot, MR recalls the newest slot, M+/M− update that slot, and MC clears all memory. Up to 20 exact decimal slots are retained for the current session, including bounded Standard results longer than 100 digits. Use the panel's previous/next buttons to inspect slots and **Use result** to recall one into the active mode where representable. Scientific recall uses binary64 precision; the saved memory value remains unchanged.
+- **Programmer:** select a base row or press **Alt+1–4** to edit Decimal, Hexadecimal, Octal or Binary. In unsigned 8-bit mode, decimal `255` is hex `FF`, octal `377` and binary `11111111`. Invalid digits are disabled. **Keypad / Bit editor** switches the workspace; paged bit ranges expose every bit.
+- **Converter:** select a category and search each unit group by name, symbol or English alias, such as `feet`, `meter` or `°C`. **Back / More** pages through matches; Enter in a search field selects the first visible match. Results update live. **Save pair** saves a favorite; **Save conversion**, or Enter in the value field, records history. **Recent** restores both the value and units. Swap/save actions are disabled while browsing Favorites or Recent.
+- **Dates:** use unambiguous `YYYY-MM-DD` inputs, Today buttons or inline calendars. **Days between dates** updates live: identical dates mean zero elapsed days or one inclusive day. **Adjust a date** applies signed intervals without replacing the separate difference inputs. Saving to history is explicit.
 
-Programmer shows **Decimal, Hexadecimal, Octal and Binary** as four representations of the same integer. Choose a base, or press Alt+1–4, to edit that row directly; the other rows remain calculated. The active base has an underline and accent, and unsupported keypad digits are disabled. Each valid representation has a copy button; incomplete input cannot copy a stale value. Binary is grouped in four-bit blocks and padded to the selected word size. Decimal **255** is hex **FF**, octal **377** and binary **11111111** (with leading zeroes to fill the word). **Keypad / Bit editor** selects the workspace; labeled bit ranges expose every bit without scrolling.
+### History, memory and preferences
 
-Converter shows all twelve categories as buttons. Search each From/To group by name, symbol or common English alias, such as `feet`, `meter` or `°C`; Enter chooses the first visible match on the current page. Three matches appear normally, or one in the compact layout. **Back / More**, arrows, Home/End and Page Up/Down reach every match. **Swap units** reverses the pair. **Save pair** stores the category and units in Favorites independently of calculation history. **Save conversion**, or Enter in the value field, records a completed conversion in Recent/history. Recent restores its value and pair. Swap/save actions are disabled while browsing Favorites or Recent. The factor or temperature formula and the display/calculation precision appear below the controls.
+Press **Ctrl+H** to open the secondary panel. Search spans the full history journal; previous/next controls page through matching entries. Copy, delete or **Use result** operates on the current card. Reused Programmer results preserve the integer's value across display bases; Dates can reuse ISO date results, while day-count entries remain descriptive.
 
-Dates separates **Days between dates** from **Adjust a date**. The populated dates immediately show a live difference; saving is explicit. Choose elapsed days (same date = 0) or include both dates (same date = 1). ISO entry, Today buttons and inline calendars all work without dropdowns. Compact calendars page through weeks with explicit controls and keyboard navigation. Adjustment accepts signed years/months/weeks/days, applies Add or Subtract in that order, and preserves the separate difference state.
+Standard places memory above the keypad; Scientific places it below. **MA** shows all slots, **MS** stores a new slot, **MR** recalls the newest, **M+ / M−** updates that slot and **MC** clears session memory. Recalling exact decimal memory into Scientific may round to binary64; the stored memory value remains exact.
 
-## Everyday controls
+The sun/moon button switches light/dark appearance. **Preferences** has Appearance, Numbers, History and Window sections. Set **3–15 significant display digits** for Scientific and Converter, grouping, history persistence and window options. Changes are drafts until **Save**; Cancel, close or Escape discards them. Restore defaults is staged, and clearing saved history requires confirmation followed by Save.
+
+<a id="readme-shortcuts"></a>
+
+## Keyboard shortcuts ⌨️
 
 | Shortcut | Action |
 | --- | --- |
-| Digits, `+ - * /` | Standard and Programmer input |
-| Enter or `=` | Calculate in Standard, Scientific and Programmer |
-| Enter in Converter / Dates | Save a conversion / calculate a date difference |
-| Escape | Clear Standard/Scientific/Programmer |
-| Delete | Clear entry in Standard; clear Programmer |
-| Backspace | Remove last entered character; native text editing in expression/value/date fields |
-| F9 | Change sign in Standard |
-| `.` or locale decimal separator | Decimal input in Standard |
-| Ctrl+C | Copy full stored result; copy a text selection when one exists |
-| Ctrl+V | Paste into the focused text field, or parse a numeric value into Standard/Programmer |
-| Ctrl+H | Show/hide history and memory panel |
-| Ctrl+1 … Ctrl+5 | Switch between the five modes |
-| Ctrl+Z / Ctrl+Y | Undo/redo Standard input and calculation state; editable text fields retain native editing |
-| Alt+1 … Alt+4 | Select Programmer Decimal / Hexadecimal / Octal / Binary input |
-| F1 | Open the built-in paged help and shortcut guide |
-| Tab / Shift+Tab / Space | Navigate controls / activate the focused button; Enter also activates actions reached by keyboard navigation |
+| `Ctrl+1` … `Ctrl+5` | Switch Standard / Scientific / Programmer / Converter / Dates |
+| `Enter` or `=` | Calculate in Standard, Scientific and Programmer |
+| `Enter` in Converter / Dates | Save the current conversion / calculate and record the active date workflow |
+| `Escape` | Clear a calculator, cancel an inline calendar or close a help/preferences dialog, depending on focus |
+| `Delete` / `Backspace` | Clear entry / remove the last character; text fields retain native editing |
+| `F9` | Change sign in Standard |
+| `Ctrl+C` / `Ctrl+V` | Copy a text selection or full result / paste into the active field or calculator |
+| `Ctrl+H` | Show or hide history and memory |
+| `Ctrl+Z` / `Ctrl+Y` | Undo/redo Standard actions; editable fields retain native text editing |
+| `Alt+1` … `Alt+4` | Choose the Programmer input base |
+| `F1` | Open the built-in paged help guide |
+| `Tab` / `Shift+Tab` / `Space` | Move focus / activate the focused control |
 
-Header copy/paste icons operate on the active mode. Invalid numeric clipboard input leaves the current value intact. Paste parsing gives the current culture priority (for example, `1.234` means 1234 in German); invariant dot-decimal notation is a fallback. Programmer paste uses the selected base. Date results can be reused only if they are in `YYYY-MM-DD` format; day counts remain human-readable history entries.
+Preferences → Window also offers **Ctrl+Alt+1–5** for mode switching. Enter activates a focused action reached through keyboard navigation. Header copy/paste buttons operate on the active mode; invalid numeric clipboard input preserves the current value. Paste parsing gives the current culture priority, with invariant dot-decimal notation as a fallback. Programmer paste uses the selected base.
 
-Completed calculations appear in the searchable history panel. One full result card is shown at a time, with previous/next buttons and a position/count indicator; all 200 retained calculations are reachable. Search covers the full journal and pages through the matching entries. Use **Use result**, copy or delete on the current card, or clear the journal. Reused history/memory integers preserve their numeric value even when Programmer displays a different base. Repeated intentional equals presses produce separate entries; a single Enter press is routed once. Conversions record only on explicit save or Enter, never on every keystroke.
+<a id="readme-numeric-behavior"></a>
 
-The sun/moon button switches dark/light appearance. Fresh installs default to Light; saved preferences are preserved. Preferences has four visible sections: Appearance, Numbers, History and Window. It includes follow-system appearance, Automatic/Compact density, reduced hover motion, system high-contrast colors, 3–15 significant display digits for Scientific and Converter with a rounding example, grouping, local history persistence and always-on-top. Choose Ctrl+1–5 or Ctrl+Alt+1–5 for mode shortcuts. Save applies the draft; Cancel, close or Escape discards it. Restore defaults is staged. Clearing saved history requires confirmation and Save. Standard retains its full decimal result independently of the display-digit preference. History starts collapsed and can expand the window within the monitor's working area.
+## Numeric behavior and limits 🔬
 
-The app opens centered in a normal window, with mode-specific sizes clamped to the monitor's working area. Drag the brand or empty header space to move it, drag an edge/corner to resize, and double-click the drag surface or use the maximize button to maximize/restore. Maximizing respects the current monitor's taskbar. Proportional layouts and compact control states adapt to the available space without AutoScroll. Long results use explicit digit pages when needed; the header and card copy actions always preserve the complete stored value. Windows 11 receives a DWM rounded-corner hint; Windows 10 uses a square window fallback. System rendering can retain square corners when maximized or snapped.
+| Engine | Precision and contract |
+| --- | --- |
+| **Standard** | Bounded base-10 `BigDecimal` backed by `BigInteger`. Up to 100 significant input digits; addition, subtraction and multiplication are exact within bounds. Division and square root round to 100 significant digits, midpoint-to-even. |
+| **Scientific** | Binary64 floating point, approximately 15 reliable significant decimal digits. Real-number expressions; no symbolic algebra or complex numbers. |
+| **Programmer** | Fixed-width integers modulo `2^width`. Signed decimal uses two's complement; other bases show raw bits. |
+| **Converter** | Binary64 factors and offsets, approximately 15 reliable significant decimal digits; temperature inputs are validated against absolute zero. |
+| **Dates** | Date-only Gregorian arithmetic from year 0001 to 9999; no time-zone or daylight-saving calculations. |
 
-## Numeric contracts and limitations
+Display rounding does not change the underlying calculation. Scientific and Converter copy/history use round-trip (`G17`) values. Standard memory and history retain full bounded decimal results, including results longer than the new-input limit.
 
-- Standard uses a bounded base-10 `BigDecimal` backed by `BigInteger`. Typed and pasted mantissas accept up to **100 significant digits**; leading zeroes do not count, while entered trailing zeroes do. Addition, subtraction and multiplication preserve exact results, including results longer than 100 digits. `0.1 + 0.2` is exactly `0.3`. Division, reciprocal and square root round to **100 significant digits, midpoint-to-even**; exact terminating results need no padding. Percentages use the same decimal engine. Excess input precision is rejected instead of silently rounded.
-- Standard's normalized coefficient is limited to **2,000 digits**, its scale to **−1,000 through 2,000**, and its nonzero adjusted decimal exponent to **−1,000 through +1,000**. The adjusted exponent is the exponent in normalized scientific notation, so `1e-1000` and `9e1000` are supported. All bounds apply to intermediate and final values; exceeding them produces an explicit error. Memory and history preserve full bounded Standard results, and recalling those stored results can exceed the 100-digit limit for new input. Pasting a copied result follows the new-input limit.
-- Standard evaluates sequentially: `2 + 3 × 4 =` gives **20**. Replacing a pending operator does not execute it. Repeated equals uses the last operation/right operand. `200 + 10 % =` gives **220**; subtraction gives **180**; multiplication gives **20**; division gives **2000**. A unary/percentage result is a complete operand; the next digit replaces that operand. A new digit after equals starts a new calculation. Backspace applies only to an editable input; CE preserves a pending binary operation; C/Escape resets it.
-- Scientific uses binary64, approximately 15 reliable significant decimal digits. Rounding, cancellation and subnormal values follow that model. Results are not arbitrary precision or symbolic. Complex numbers are unsupported. Overflow, nonfinite results, invalid domains and detected underflow raise readable errors. Factorial supports integers 0–170. `0^0` is rejected. Powers associate right to left; `-2^2` is **−4**, and `2^-2` is **0.25**. Tangent is rejected when `|cos(angle)| < 10^-14` near singularities. Hyperbolic functions are dimensionless. Expression limits: 2048 characters and 64 recursive levels.
-- Scientific expressions remain editable after equals; Enter reevaluates the current expression. Editing an expression or changing DEG/RAD invalidates the displayed/copyable result and prompts evaluation, preventing a stale value from being presented under a new angle unit. Keypad operators continue from the last computed value. Keypad numeric input after equals begins a fresh expression. The formatted result uses 3–15 significant digits while copy/history use round-trip (`G17`) precision. Scientific memory stores that decimal round-trip representation of the approximate binary64 result. Recalling an exact Standard memory value into Scientific converts it to binary64 and may round it; nonfinite or underflowing conversions are rejected, and the saved value remains exact.
-- Programmer masks every result modulo `2^width`, including parsed out-of-range integers. Signed decimal values use two's complement; other bases show raw bits. Right shift is arithmetic when signed and logical when unsigned. Shift counts must be `0..width−1`, with errors outside that range. Division truncates toward zero. Widening sign-extends signed negative values; narrowing masks. Changing width or signedness cancels a pending operation.
-- Conversion factors use binary64, approximately 15 reliable significant decimal digits, with 3–15 significant digits available for display. Validated identity conversions preserve their input; offset-free conversions use the direct scale ratio to avoid unnecessary base-unit overflow/underflow. Temperature conversions retain offset/domain validation. International foot/pound, thermochemical calorie, BTU (IT), mechanical/metric horsepower, US/Imperial volume and decimal/binary data prefixes are explicit. The Julian year is exactly 365.25 days. Kelvin input below zero is rejected; Celsius/Fahrenheit cancellation within four machine epsilons of the offset is normalized at absolute zero. Currency rates are not included.
-- Date operations are date-only Gregorian calculations from year 0001 to 9999, without time zones or daylight saving. Default elapsed differences are absolute/exclusive: identical dates are zero days. Inclusive counting adds one. Intervals apply signed years, then months, then weeks/days, clamping at each month/year boundary.
-- Numeric result fields are selectable/read-only. `ResultDisplay` fits text to the available space and inserts explicit line breaks; if the complete value still does not fit, previous/next digit-page buttons and a page indicator expose every character. Copying selected display text copies that selection; **Copy result** and each card's copy button copy the full stored value. There are no native result scrollbars. Long expression captions can be abbreviated. The programmer bit grid exposes all 64 bits. Display precision does not change the underlying arithmetic.
+<details>
+<summary><strong>Detailed arithmetic, input and range contracts</strong></summary>
 
-## Privacy and persistence
+**Standard**
 
-Preferences and up to 20 favorite conversion pairs are saved to `%LOCALAPPDATA%\AsterCalculator\state.json` using a temporary file in the same directory followed by replacement. History persistence defaults to **off**. Disabling it removes saved history on the next successful save while retaining this session's list and favorites. Memory never persists. Missing/corrupt files use defaults. Save failures remain visible alongside later status messages; preferences apply for the session and can be saved again to retry.
+- Leading zeros do not count toward the 100-digit mantissa limit; entered trailing zeros do. Excess precision is rejected. Pasting a copied result follows the new-input limit; recalling a stored result can exceed it.
+- Normalized coefficients are limited to **2,000 digits**, scale to **−1,000 through 2,000**, and nonzero adjusted decimal exponents to **−1,000 through +1,000**. `1e-1000` and `9e1000` are supported. Bounds apply to intermediate and final values; violations produce an error. Exact terminating division results need no padding.
+- Replacing a pending operator does not execute it. Repeated equals repeats the last operation/right operand. `200 − 10 % =` gives `180`; multiplication gives `20`; division gives `2000`.
+- A unary/percentage result is a complete operand; a new digit replaces it. A new digit after equals starts a calculation. Backspace edits only an editable input; CE preserves a pending operation, while C/Escape resets it.
 
-Set `ASTER_DATA_DIRECTORY` before launch to choose a portable/testing data directory. Multiple running instances share a last-writer-wins state file; they do not merge histories. State is ordinary local JSON, not encrypted storage. No telemetry, network services or live-rate dependencies are included.
+**Scientific**
 
-## Solution structure
+- Expressions are limited to **2,048 characters** and **64 recursive levels**. The parser does not execute scripts or dynamically evaluate code.
+- Factorial accepts integers **0–170**. `0^0` is rejected; `-2^2` is `-4`, and `2^-2` is `0.25`. Tangent is rejected near singularities when `|cos(angle)| < 10^-14`. Hyperbolic functions are dimensionless.
+- Binary64 rounding, cancellation and subnormal behavior apply. Invalid domains, nonfinite results, overflow and detected underflow produce readable errors.
+- Enter reevaluates the current expression. Keypad operators can continue from the last result; keypad numeric input after equals begins a fresh expression. Memory stores the decimal round-trip representation of the approximate result. Out-of-range or underflowing recall into Scientific is rejected.
+
+**Programmer**
+
+- Parsed out-of-range integers and all results are masked to the chosen width. Division truncates toward zero. Right shift is arithmetic when signed and logical when unsigned.
+- Shift counts must be `0..width−1`. Widening sign-extends negative signed values; narrowing masks. Changing width or signedness cancels a pending operation.
+- Binary display is grouped in four-bit blocks and padded to the word size. Incomplete input cannot copy a stale result.
+
+**Converter and Dates**
+
+- Valid identity conversions preserve the input after domain validation. Offset-free conversions use a direct scale ratio to avoid unnecessary intermediate overflow/underflow.
+- Factors distinguish the international foot/pound, thermochemical calorie, BTU (IT), mechanical/metric horsepower, and US/Imperial volume. A Julian year is exactly 365.25 days. Temperature cancellation within four machine epsilons of the input offset is normalized at absolute zero; Kelvin below zero is rejected.
+- Date differences are absolute and elapsed by default; inclusive counting adds one day. Interval adjustment applies years, then months, then weeks/days, clamping at each year/month boundary.
+
+**Result display**
+
+Results are selectable and read-only. Text fits and wraps; previous/next digit pages expose any remaining characters without scrollbars. Selecting text copies that selection; **Copy result** and history-card copy buttons preserve the complete stored value. Long expression captions may be abbreviated.
+
+</details>
+
+<a id="readme-configuration"></a>
+
+## Configuration and local data 🔒
+
+Configure everyday options in **Preferences**. No credentials, API keys, database or service configuration is required.
+
+| Data | Retention |
+| --- | --- |
+| Preferences and up to 20 favorite unit pairs | Saved to local JSON |
+| Calculation history | Up to 200 entries in session; saving between sessions defaults to **off** |
+| Memory slots | Up to 20, session only; never persisted |
+
+The default file is `%LOCALAPPDATA%\AsterCalculator\state.json`. The optional **`ASTER_DATA_DIRECTORY`** environment variable overrides its parent directory. For an isolated local profile, set it before launch:
+
+```powershell
+$env:ASTER_DATA_DIRECTORY = Join-Path $PWD '.local\readme-profile'
+dotnet run --project src/ModernCalculator.WinForms -c Release --no-build
+```
+
+The variable applies to processes started from that PowerShell session. Unset it with `Remove-Item Env:ASTER_DATA_DIRECTORY` to return subsequent launches to the default directory.
+
+State uses a temporary file in the same directory followed by replacement. Missing or corrupt data falls back to defaults; save failures remain visible, and session settings continue to work. Disabling history persistence removes saved history on the next successful save while preserving the session list and favorites. Multiple instances use **last writer wins** without merging histories. State is ordinary local JSON and is **not encrypted**.
+
+<a id="readme-architecture"></a>
+
+## Architecture and technology 🏗️
+
+```mermaid
+flowchart TD
+    UI[Windows Forms UI] --> Core[Core calculation engines]
+    UI --> Infra[Infrastructure: settings and persistence]
+    Infra --> Core
+    Infra --> State[(Local JSON state)]
+    Tests[xUnit engine and persistence tests] --> Core
+    Tests --> Infra
+    Checks[Hidden WinForms component checks] --> UI
+```
+
+| Layer | Responsibility and technology |
+| --- | --- |
+| [Core](src/ModernCalculator.Core) | .NET 10 engines, bounded decimal arithmetic, expression grammar, integer operations, conversions, dates, memory and history. No Windows Forms references. |
+| [Infrastructure](src/ModernCalculator.Infrastructure) | Validated preferences and `System.Text.Json` persistence; references Core. |
+| [WinForms](src/ModernCalculator.WinForms) | `net10.0-windows` executable, custom controls/vector icons, mode views, themes and PerMonitorV2 configuration. Mouse and keyboard routes share engine actions. |
+| [Tests](tests/ModernCalculator.Tests) | xUnit, Microsoft.NET.Test.Sdk and the Visual Studio test adapter. |
+| [Build settings](Directory.Build.props) | C# 14, nullable reference types, implicit usings, deterministic builds and warnings treated as errors. |
 
 ```text
 ModernCalculator.sln
 src/
-  ModernCalculator.Core/
-    Calculations/  Expressions/  Modes/  Conversions/  Memory/  History/
-  ModernCalculator.Infrastructure/
-    Persistence/  Settings/
-  ModernCalculator.WinForms/
-    Forms/  Views/  Controls/  Themes/  Resources/  Program.cs
+  ModernCalculator.Core/            # Calculations, expressions, modes, units, memory, history
+  ModernCalculator.Infrastructure/  # StateStore and AppSettings
+  ModernCalculator.WinForms/        # Entry point, forms, views, controls, themes, resources
 tests/
-  ModernCalculator.Tests/    # engine and persistence regression tests
-  ModernCalculator.UiChecks/ # hidden native component layout/render checks
-tools/Generate-Icon.ps1
-docs/IMPLEMENTATION.md
-docs/VERIFICATION.md
+  ModernCalculator.Tests/           # Engine and persistence regression tests
+  ModernCalculator.UiChecks/        # Hidden component checks, PNGs and diagnostics
+  ModernCalculator.DesktopAudit/    # Optional manual walkthrough with isolated state
+tools/                             # Icon generation and specialized audit packaging
+docs/images/                       # README logo and native-control previews
 ```
 
-Core has no Windows Forms references. The UI routes mouse and keyboard through the same engine methods. The parser is deterministic and never dynamically evaluates code. Original icons use a shared 24-unit vector grid; the bundled executable icon includes 16/32/48/64/128/256-pixel artwork. Regenerate it with `./tools/Generate-Icon.ps1` on Windows. No third-party artwork is bundled.
+The project uses original vector icons and a bundled multi-resolution executable icon. [Generate-Icon.ps1](tools/Generate-Icon.ps1) regenerates the application icon on Windows. The README logo is the existing icon's embedded 256-pixel PNG.
 
-## Test and package
+<a id="readme-development"></a>
 
-The independent review fixed answer-dependent Scientific memory, Programmer unary chaining and leading-sign editing, finite conversion boundary handling, regional history search, Gregorian date consistency, invalid/hidden save actions, paged unit-search Enter behavior, and keyboard/dialog focus routing. Findings, priorities, removals/additions, acceptance criteria and verification limits are in [docs/INDEPENDENT_REVIEW.md](docs/INDEPENDENT_REVIEW.md).
+## Testing and development 🧪
 
-For a live walkthrough with isolated data, build `tests/ModernCalculator.DesktopAudit/ModernCalculator.DesktopAudit.csproj` and run its executable. It hosts the production MainForm and engines, sends no automated input, and stores each new session beneath its output folder's `sessions/` directory. It does not read or modify the user's normal Aster data directory.
+Run the engine and persistence regression suite:
 
 ```powershell
 dotnet test tests/ModernCalculator.Tests -c Release --logger "console;verbosity=minimal"
-dotnet build tests/ModernCalculator.UiChecks -c Release -m:1
-dotnet run --project tests/ModernCalculator.UiChecks -c Release --no-build -- artifacts/UiChecks
-dotnet publish src/ModernCalculator.WinForms -c Release --self-contained false -o artifacts/Aster-Reviewed
 ```
 
-The framework-dependent output is `artifacts/Aster-Reviewed/Aster.exe` and requires the **.NET 10 Desktop Runtime** on the destination Windows machine. The separate output directory preserves earlier builds. Delivery archives are `artifacts/Aster-reviewed-win-x64.zip` for the runnable files and `artifacts/Aster-reviewed-source.zip` for source. To bundle the runtime for a particular architecture instead, restore/publish with the desired runtime identifier and `--self-contained true`, for example `-r win-x64`. This downloads the matching runtime pack.
+Tests cover decimal precision/state, scientific grammar/domains, base/bit operations, conversion round trips, date boundaries, culture-aware input, memory/history, undo/redo and persistence recovery. Engine tests do not open a window.
 
-Tests exercise arithmetic/state, scientific grammar/domains, base/bit operations, all unit-pair round trips, date boundaries, strict culture-aware input, memory/history, undo/redo and persistence recovery. Engine tests do not open a window. The component harness emits PNGs and JSON diagnostics for both themes, minimum sizes and relative scale simulations; it does not change native Windows DPI. The actual verification record and remaining interactive checks are in [docs/VERIFICATION.md](docs/VERIFICATION.md). [The audit resolution ledger](docs/AUDIT_RESOLUTION.md) maps every source-audit line to implementation, evidence or an explicit external validation limit. Full numeric/design decisions and official design references are in [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md).
+Build and run the Windows-only component harness:
+
+```powershell
+dotnet build tests/ModernCalculator.UiChecks -c Release -m:1
+dotnet run --project tests/ModernCalculator.UiChecks -c Release --no-build -- artifacts/UiChecks
+```
+
+Each run creates a unique child directory containing `report.json`, `report.txt`, isolated state and PNGs. An optional second argument filters check names. The harness constructs hidden native controls and exercises layout/rendering and handlers across modes, themes, minimum sizes and relative scale simulations. It **does not** change Windows DPI, show windows, send physical keyboard/mouse input, exercise the clipboard or verify screen-reader output. See the [component harness guide](tests/ModernCalculator.UiChecks/README.md) for its methodology; its references to separate audit documents are not included in this checkout.
+
+For a visible manual walkthrough using a fresh isolated profile:
+
+```powershell
+dotnet run --project tests/ModernCalculator.DesktopAudit -c Release
+```
+
+This optional host uses the production MainForm and engines without sending automated input. State is stored in a fresh session beneath its output folder's `sessions/` directory. **DesktopAudit is outside the solution**, so the command builds it separately.
+
+<a id="readme-publishing"></a>
+
+## Publish a Windows build 📦
+
+Create a **framework-dependent** local build:
+
+```powershell
+dotnet publish src/ModernCalculator.WinForms -c Release --self-contained false -o artifacts/publish/framework-dependent
+```
+
+Run `artifacts/publish/framework-dependent/Aster.exe` and keep the output folder together. The destination computer needs the **[.NET 10 Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)** matching the published architecture.
+
+To bundle the runtime for **Windows x64** instead:
+
+```powershell
+dotnet publish src/ModernCalculator.WinForms -c Release -r win-x64 --self-contained true -o artifacts/publish/win-x64
+```
+
+This may download the matching runtime pack. Both commands create local publish folders; choose the distribution appropriate to your destination machine. The specialized [audit packaging script](tools/Package-Audited.ps1) expects prepared acceptance reports and matching published/tested binaries. Its default paths, test counts and audit-document references belong to a separate acceptance workflow; use the direct publish commands for a regular build.
+
+<a id="readme-troubleshooting"></a>
+
+## Troubleshooting 💡
+
+| Symptom | What to check |
+| --- | --- |
+| Visual Studio says a class library cannot be started | Set **ModernCalculator.WinForms** as the startup project. Visual Studio can retain an older per-user selection. |
+| The .NET 10 target is unavailable | Install the .NET 10 SDK; check `dotnet --list-sdks` and [global.json](global.json). Use Visual Studio 2026 (18+) for IDE builds. |
+| A published app asks for .NET | Install the matching **Desktop Runtime**, or publish a self-contained build. |
+| A scientific function rejects its arguments | Match the locale's argument separator, use explicit multiplication and check the function's real-number domain. Press **F1** for built-in examples. |
+| A result cannot be copied after an edit | Evaluate again. Scientific expression/angle edits and incomplete Programmer input invalidate the previous copyable result. |
+| History is missing after restart | Persistence defaults to off. Enable it under Preferences → History and **Save**. |
+| Preferences cannot be saved | Check directory permissions or choose a writable `ASTER_DATA_DIRECTORY`; retry Save. Changes remain active for the session. |
+
+Windows 11 receives a rounded-corner hint; Windows 10 uses a square fallback. Maximized or snapped windows may retain square corners. Desktop focus, monitor transitions, physical input, clipboard behavior and screen-reader output need interactive verification beyond the hidden component checks.
+
+<a id="readme-contributing"></a>
+
+## Contributing 🤝
+
+Use the [issue tracker](https://github.com/gcfernando/aster/issues) for reproducible problems or proposed improvements. Include the affected mode, Windows/.NET version, regional settings and exact input or steps. For UI issues, include theme, window size and display scaling; use sample data in screenshots.
+
+Keep changes focused, preserve the numeric contracts above, and run the relevant engine tests and Windows component checks. Update documentation when behavior changes. The [Core engines](src/ModernCalculator.Core) and [mode views](src/ModernCalculator.WinForms/Views) are useful starting points for understanding how input reaches a calculation.
+
+<a id="readme-license"></a>
+
+## License 📄
+
+Aster Calculator is licensed under the **[MIT License](LICENSE)**. Copyright © 2026 Gehan Fernando.
+
+<p align="center"><a href="#readme-quick-start">Build Aster</a> · <a href="#readme-configuration">Local data and preferences</a> · <a href="https://github.com/gcfernando/aster">GitHub repository</a></p>
 
