@@ -2,6 +2,16 @@
 
 Aster works locally without an account, payment, key, activation or feature restrictions. It retains the MIT license. Application projects have no third-party NuGet dependencies; the framework-dependent portable package uses a separately installed Microsoft .NET Desktop Runtime. It contains no bundled runtime. The local workflow below neither signs nor publishes a release.
 
+## Download the latest main preview
+
+Download **[Aster-win-x64.zip](https://github.com/gcfernando/aster/releases/download/latest/Aster-win-x64.zip)** from the [latest preview release](https://github.com/gcfernando/aster/releases/tag/latest). Extract the complete ZIP and follow the installation steps below. The release notes link to the exact source commit and verification run. The ZIP includes `Aster.exe`, its required companion files, documentation and test evidence. GitHub's automatically generated source-code archives do not contain the runnable application.
+
+After a push to `main`, GitHub Actions runs release-helper checks, complete engine/hidden component verification and evidence-bound packaging. A separate job publishes only after those steps pass and the commit still matches the current `main` head. The rolling `latest` tag and assets are reserved for this automation. The download is an **unsigned preview**; versioned stable releases and their acceptance/signing decisions remain separate. GitHub's `/releases/latest` route selects stable releases, so use the explicit preview links above.
+
+Successful runs also retain an **Aster-win-x64** artifact for 30 days and verification reports for 14 days on the [workflow's Actions page](https://github.com/gcfernando/aster/actions/workflows/verify.yml). Downloading workflow artifacts requires a GitHub login. Pull requests and manual workflow runs produce artifacts without publishing; an old rerun cannot replace a newer main preview. Build/test failures leave the existing release alone. Asset replacement is not atomic: if an upload fails, use its complete Actions artifact and rerun the current main workflow's failed jobs. A missing link or checksum mismatch during an update should be retried after publication completes.
+
+The publication job uses only the scoped `GITHUB_TOKEN` with `contents: write`; build and pull-request jobs retain read-only repository permissions. Do not use the reserved `latest` tag for a manual release. The publisher refuses to replace an unmarked, stable or immutable release. If repository policy forbids the moving tag or release writes, publication fails visibly while the verified Actions artifact remains available. No signing certificate or personal access token is stored by this workflow.
+
 ## Prepare and verify a candidate
 
 Use Windows x64, PowerShell 7 and the .NET 10 SDK. Start in the checkout root. First run the complete local verification:
@@ -41,7 +51,7 @@ F1's Support information exposes local version/build/runtime/culture/theme/DPI i
 
 ## Required external release gates
 
-This workflow prepares a local unsigned candidate. Engine/component passes alone do not justify unrestricted commercial-release claims. Before public distribution, record:
+The local workflow prepares an unsigned candidate and CI exposes it as a preview. Engine/component passes alone do not justify unrestricted commercial-release claims. Before promoting a preview to a stable release, record:
 
 - Clean-machine extraction/startup on the chosen supported Windows editions, including runtime installation/detection, offline calculation and non-admin profile access.
 - Upgrade and rollback with legacy/current/future profiles; interrupted/write-denied storage recovery; full-folder removal with intentional profile retention.
@@ -49,4 +59,4 @@ This workflow prepares a local unsigned candidate. Engine/component passes alone
 - The owner's authentic publisher/signing and distribution policy, package provenance and reputation review. No certificate or release identity is fabricated by these tools.
 - Version/release notes, numeric limitations, known issues, support ownership and runtime/security update responsibility.
 
-The tested development host and actual results belong in the audit evidence. They do not substitute for a supported-OS matrix or clean-machine run. The checked-in CI workflow runs builds and tests and retains evidence; it never deploys or publishes packages, and its remote execution remains unverified until run by the repository owner.
+The tested development host and actual results belong in the audit evidence. They do not substitute for a supported-OS matrix or clean-machine run. Check the linked CI run for the actual remote build, verification and preview-publication result.

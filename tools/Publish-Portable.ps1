@@ -34,14 +34,14 @@ supported Windows and runtime patches. Calculations work offline.
 F1 opens help, including local version/support diagnostics. LICENSE is MIT.
 docs/release-guide.md explains install, update, rollback, uninstall and privacy.
 verification/ records engine and hidden component checks and their limits.
-This local unsigned candidate is not a certificate of public-release readiness.
+This unsigned preview candidate is not a certificate of stable-release readiness.
 '@ | Set-Content -LiteralPath (Join-Path $folder 'START-HERE.txt') -Encoding utf8
     $package = [ordered]@{
         schemaVersion = 1
         version = [Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $folder 'Aster.dll')).ProductVersion
         runtimeIdentifier = 'win-x64'
         selfContained = $false
-        signing = 'Unsigned local candidate'
+        signing = 'Unsigned preview candidate'
         verificationManifestSha256 = (Get-FileHash -LiteralPath $manifestPath).Hash.ToLowerInvariant()
         files = @(Get-ChildItem -LiteralPath $folder -File -Recurse | Sort-Object FullName | ForEach-Object { Get-ReleaseFileRecord $folder $_.FullName })
     }

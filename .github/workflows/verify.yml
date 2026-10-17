@@ -7,7 +7,8 @@ permissions:
   contents: read
 concurrency:
   group: verify-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Let a main release upload finish before another main run starts.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 jobs:
   windows:
     runs-on: windows-latest
@@ -22,9 +23,30 @@ jobs:
         run: |
           ./tests/PackageEvidence.Tests.ps1
           ./tests/ReleaseEvidence.Tests.ps1
+          ./tests/MainBuildRelease.Tests.ps1
       - name: Build and complete engine/component verification
         shell: pwsh
         run: ./tools/Verify-Release.ps1
+      - name: Package verified Windows application
+        id: package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $manifests = @(Get-ChildItem artifacts/ReleaseVerification/*/manifest.json)
+          if ($manifests.Count -ne 1) { throw 'Expected exactly one verified manifest on this clean runner.' }
+          ./tools/Publish-Portable.ps1 -VerificationManifest ([IO.Path]::GetRelativePath($PWD.Path, $manifests[0].FullName))
+          $archives = @(Get-ChildItem artifacts/ReleaseCandidates/*/Aster-win-x64.zip)
+          if ($archives.Count -ne 1) { throw 'Expected exactly one verified package.' }
+          "directory=$($archives[0].Directory.FullName)" >> $env:GITHUB_OUTPUT
+      - name: Retain downloadable Windows application
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: Aster-win-x64
+          path: |
+            ${{ steps.package.outputs.directory }}/Aster-win-x64.zip
+            ${{ steps.package.outputs.directory }}/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
       - name: Retain verification evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -33,3 +55,23 @@ jobs:
           path: artifacts/ReleaseVerification/
           if-no-files-found: warn
           retention-days: 14
+  publish-main:
+    needs: windows
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: Aster-win-x64
+          path: artifacts/main-download
+      - name: Update latest main preview download
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./tools/Publish-MainBuild.ps1 -PackageDirectory artifacts/main-download
