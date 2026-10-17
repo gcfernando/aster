@@ -86,7 +86,7 @@ The latest tag and its two assets are replaced by passing current-main builds. D
         # Only this explicitly reserved moving preview tag is updated; main history is untouched.
         [void](Invoke-BuildGitHub -Arguments @('api', '--method', 'PATCH', "repos/$repo/git/refs/tags/latest", '-f', "sha=$commit", '-F', 'force=true'))
         [void](Invoke-BuildGitHub -Arguments @('release', 'edit', 'latest', '--repo', $repo, '--title', $title,
-            '--prerelease', '--latest=false', '--notes-file', $notesPath))
+            '--prerelease', '--latest=false', '--draft=false', '--notes-file', $notesPath))
     }
     "[Download latest Windows preview](https://github.com/$repo/releases/download/latest/Aster-win-x64.zip) ([release notes](https://github.com/$repo/releases/tag/latest))." |
         Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY

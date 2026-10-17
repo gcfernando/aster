@@ -24,7 +24,7 @@ foreach ($invalid in @("$('0' * 64)  Aster-win-x64.zip", "$hash  Other.zip", "$h
     Assert-Rejected { Assert-MainBuildPackage $fixture }
 }
 "$hash  Aster-win-x64.zip" | Set-Content -LiteralPath $checksum
-$owned = @{ tag_name = 'latest'; prerelease = $true; immutable = $false; body = $script:MainBuildMarker }
+$owned = @{ tag_name = 'latest'; prerelease = $true; immutable = $false; draft = $true; body = $script:MainBuildMarker }
 Assert-MainBuildRelease ([pscustomobject]$owned)
 $checks++
 foreach ($change in @(@{tag_name='v1.0'}, @{prerelease=$false}, @{immutable=$true}, @{body='Manual release'})) {
@@ -84,6 +84,7 @@ try {
     Assert-True (($script:calls[-3] -join ' ').Contains('release upload latest')) 'Existing preview was not updated.'
     Assert-True (($script:calls[-2] -join ' ').Contains('/git/refs/tags/latest')) 'The rolling tag was not updated.'
     Assert-True (($script:calls[-1] -join ' ').Contains('release edit latest')) 'Preview notes were not updated.'
+    Assert-True (($script:calls[-1] -join ' ').Contains('--draft=false')) 'An interrupted draft upload was not published after recovery.'
     $script:releases = '[[{"tag_name":"latest","prerelease":false,"immutable":false,"body":"Manual release"}]]'
     $script:calls.Clear()
     Assert-Rejected { Publish-MainBuild $fixture }
