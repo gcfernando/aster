@@ -51,10 +51,15 @@ public sealed class SettingsForm : BorderlessForm
         reducedMotion = Check("Reduce hover motion", settings.ReducedMotion);
         highContrast = Check("Use high-contrast system colors", settings.HighContrast);
         precision = new FlatNumberInput { AccessibleName = "Scientific significant display digits", Minimum = 3, Maximum = 15, Value = settings.Precision };
-        var example = Ui.Label("", 9);
-        void UpdateExample() => example.Text = precision.TryGetValue(out var digits)
-            ? "Example: 1 ÷ 3 → " + (1d / 3).ToString("G" + digits, System.Globalization.CultureInfo.CurrentCulture)
-            : "Enter a whole number from 3 to 15.";
+        var example = Ui.Label("", 9); example.AccessibleName = "Display precision feedback";
+        void UpdateExample()
+        {
+            var valid = precision.TryGetValue(out var digits);
+            example.Text = valid ? "Example: 1 ÷ 3 → " + (1d / 3).ToString("G" + digits, System.Globalization.CultureInfo.CurrentCulture)
+                : "Enter a whole number from 3 to 15.";
+            example.AccessibleDescription = example.Text;
+            example.ForeColor = valid ? palette.Muted : palette.Error;
+        }
         precision.InputChanged += (_, _) => UpdateExample(); UpdateExample();
         var appearance = Page(6);
         appearance.Controls.Add(Ui.Label("Appearance follows Windows when System is selected.", 9), 0, 0);
@@ -66,7 +71,7 @@ public sealed class SettingsForm : BorderlessForm
         numbers.Controls.Add(Ui.Label("Displayed significant digits — Scientific & Converter", 10, true), 0, 0);
         numbers.Controls.Add(precision, 0, 1); numbers.Controls.Add(Ui.Label("Range: 3–15 significant digits; rounded for display only.", 9), 0, 2);
         numbers.Controls.Add(example, 0, 3); numbers.Controls.Add(grouping, 0, 4);
-        numbers.Controls.Add(Ui.Label("Standard keeps its full decimal value. Scientific and Converter calculate with binary64 precision (about 15 significant digits).", 9), 0, 5);
+        numbers.Controls.Add(Ui.Label("Standard keeps its full decimal value. Scientific and Converter use approximate binary64 arithmetic; accuracy depends on the calculation.", 9), 0, 5);
         pages.Add(numbers);
         var privacy = Page(5); privacy.Controls.Add(history, 0, 0);
         privacy.Controls.Add(Ui.Label("History stores up to 200 expressions, results, modes and timestamps locally. Turning persistence off removes saved history on Save.", 9), 0, 1);
@@ -90,7 +95,11 @@ public sealed class SettingsForm : BorderlessForm
         var cancel = Ui.Button("Cancel", () => { DialogResult = DialogResult.Cancel; Close(); }, ButtonTone.Quiet);
         var save = Ui.Button("Save preferences", () =>
         {
-            if (!precision.TryCommit(out var error)) { sections.SelectedIndex = 1; clearNote.Text = error; precision.FocusInput(); return; }
+            if (!precision.TryCommit(out var error))
+            {
+                sections.SelectedIndex = 1; UpdateExample(); precision.FocusInput();
+                Ui.Announce(precision.Editor, error, true); return;
+            }
             Result = settings with { Theme = (ThemePreference)theme.SelectedIndex, Density = (DensityPreference)density.SelectedIndex,
                 ModeShortcuts = (ModeShortcutPreference)shortcuts.SelectedIndex, Precision = precision.Value, GroupDigits = grouping.Checked,
                 PersistHistory = history.Checked, AlwaysOnTop = top.Checked, ReducedMotion = reducedMotion.Checked, HighContrast = highContrast.Checked };
@@ -99,6 +108,7 @@ public sealed class SettingsForm : BorderlessForm
         actions.Controls.Add(cancel, 1, 0); actions.Controls.Add(save, 2, 0); layout.Controls.Add(actions, 0, 3);
         CancelButton = cancel; AcceptButton = save; Controls.Add(layout); Ui.Theme(this, palette);
         foreach (var label in pages.SelectMany(Descendants).OfType<Label>()) label.ForeColor = palette.Muted;
+        UpdateExample();
         ResumeLayout(true); Ui.AttachTooltips(this);
     }
     private static TableLayoutPanel Page(int rows) => Ui.Table(1, Enumerable.Repeat(-1f, rows).ToArray());

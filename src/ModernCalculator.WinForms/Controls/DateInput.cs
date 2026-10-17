@@ -8,6 +8,7 @@ namespace ModernCalculator.WinForms.Controls;
 /// <summary>Direct ISO date entry with explicit Today and inline-calendar actions.</summary>
 public sealed class DateInput : UserControl, IThemedControl
 {
+    private const string DateHelp = "Type a Gregorian date, for example 2026-10-16. Years 0001 through 9999 are supported.";
     private readonly Label label;
     private readonly TextBox editor;
     private readonly TableLayoutPanel layout;
@@ -26,21 +27,23 @@ public sealed class DateInput : UserControl, IThemedControl
         fields.ColumnStyles.Add(new(SizeType.Percent, 100)); fields.ColumnStyles.Add(new(SizeType.Absolute, 30)); fields.ColumnStyles.Add(new(SizeType.Absolute, 48));
         editor = Ui.Input(name + " in YYYY-MM-DD format", initial.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
         editor.BorderStyle = BorderStyle.None; editor.Margin = new(4, 4, 4, 2); editor.MaxLength = 10; editor.PlaceholderText = "YYYY-MM-DD"; Ui.SetFont(editor, 11, family: "Consolas");
-        editor.AccessibleDescription = "Type a Gregorian date, for example 2026-10-16. Years 0001 through 9999 are supported.";
+        editor.AccessibleDescription = DateHelp;
         var calendar = Ui.Button("", () => CalendarRequested?.Invoke(this, EventArgs.Empty), ButtonTone.Normal, IconKind.Calendar, "Choose " + name + " in inline calendar");
         calendar.AccessibleDescription = "Opens an inline month calendar. Direct keyboard entry remains available.";
         var today = Ui.Button("Today", () => SetDate(DateOnly.FromDateTime(DateTime.Today)), ButtonTone.Normal, name: "Set " + name + " to today");
         Ui.SetFont(today, 9); calendar.Margin = today.Margin = new(1);
         fields.Controls.Add(editor, 0, 0); fields.Controls.Add(calendar, 1, 0); fields.Controls.Add(today, 2, 0);
         layout.Controls.Add(fields, 0, 1); Controls.Add(layout);
-        editor.TextChanged += (_, _) => { DateChanged?.Invoke(this, EventArgs.Empty); Invalidate(); };
+        editor.TextChanged += (_, _) => { UpdateValidation(); DateChanged?.Invoke(this, EventArgs.Empty); Invalidate(); };
         editor.Enter += (_, _) => Invalidate(); editor.Leave += (_, _) => Invalidate();
         editor.KeyDown += (_, e) => { if (e.Alt && e.KeyCode == Keys.Down) { CalendarRequested?.Invoke(this, EventArgs.Empty); e.Handled = e.SuppressKeyPress = true; } };
         ResumeLayout(true);
     }
     // Parse ISO dates independently of the region's default calendar.
     public bool TryGetDate(out DateOnly date) => DateOnly.TryParseExact(editor.Text.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
-    public DateOnly ReadDate() => TryGetDate(out var date) ? date : throw new FormatException("Enter a valid date in YYYY-MM-DD format (years 0001–9999).");
+    private string ValidationMessage => $"{AccessibleName}: enter a valid date in YYYY-MM-DD format (years 0001–9999).";
+    private void UpdateValidation() => editor.AccessibleDescription = TryGetDate(out _) ? DateHelp : ValidationMessage;
+    public DateOnly ReadDate() => TryGetDate(out var date) ? date : throw new FormatException(ValidationMessage);
     public void SetDate(DateOnly date) => editor.Text = date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     public void FocusInput() { editor.Focus(); editor.SelectAll(); }
     public void AdaptCompact(bool compact)

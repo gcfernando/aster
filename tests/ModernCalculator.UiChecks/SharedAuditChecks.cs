@@ -71,10 +71,17 @@ public static class SharedAuditChecks
     private static void InvalidPrecision()
     {
         var initial = new AppSettings(); using var form = new SettingsForm(initial, Palette.Resolve(initial.Theme)); using var host = Host(form, new(570, 500), true);
-        Named<SegmentedControl>(form, "Preferences section").SelectedIndex = 1;
+        var sections = Named<SegmentedControl>(form, "Preferences section"); sections.SelectedIndex = 2;
         var input = Named<FlatNumberInput>(form, "Scientific significant display digits"); input.Editor.Text = "16";
         Activate(Named<CalcButton>(form, "Save preferences")); Require(form.DialogResult != DialogResult.OK && form.Result == initial, "Invalid precision committed settings.");
-        input.Editor.Text = "7"; Activate(Named<CalcButton>(form, "Save preferences")); Require(form.Result.Precision == 7, "Valid corrected precision was not saved.");
+        var feedback = Named<Label>(form, "Display precision feedback");
+        Require(sections.SelectedIndex == 1 && feedback.Parent == input.Parent && feedback.Text.Contains("3 to 15", StringComparison.Ordinal),
+            "Invalid precision feedback is not on the selected Numbers page.");
+        Require(feedback.ForeColor == Palette.Resolve(initial.Theme).Error && input.Editor.AccessibleDescription?.Contains("3 to 15", StringComparison.Ordinal) == true,
+            "Invalid precision feedback lacks error styling or an accessible explanation.");
+        input.Editor.Text = "7"; Require(feedback.Text.StartsWith("Example:", StringComparison.Ordinal) && feedback.ForeColor == Palette.Resolve(initial.Theme).Muted,
+            "Corrected precision retained its error feedback.");
+        Activate(Named<CalcButton>(form, "Save preferences")); Require(form.Result.Precision == 7, "Valid corrected precision was not saved.");
     }
     private static void PaletteContrast()
     {

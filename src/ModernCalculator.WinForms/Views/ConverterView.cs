@@ -217,7 +217,7 @@ public sealed class ConverterView : ModeView
 
     private void UpdateExplanation()
     {
-        var precision = $"{Context.Settings.Precision} significant display digits · approx. 15-digit calculation precision";
+        var precision = $"{Context.Settings.Precision} significant display digits · approximate binary64 arithmetic";
         var detail = collection.SelectedIndex switch
         {
             1 => "Favorites stay on this device. Select a pair to return to Convert; Save pair adds or removes it there.",

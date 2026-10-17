@@ -198,7 +198,9 @@ public sealed class DateView : ModeView
     public override void Reuse(string value)
     {
         if (!DateOnly.TryParseExact(value.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date)) { Context.Status("Choose a date result in YYYY-MM-DD format; a day count cannot be used as a date."); return; }
-        var target = workflow.SelectedIndex == 0 ? first : starting; target.SetDate(date); target.FocusInput();
+        var target = calendarTarget ?? (workflow.SelectedIndex == 0 ? first : starting);
+        if (calendarTarget is not null) CloseCalendar(false);
+        target.SetDate(date); target.FocusInput();
     }
     public override void FocusInput() { if (calendarTarget is not null) calendar.FocusSelectedDay(); else (workflow.SelectedIndex == 0 ? first : starting).FocusInput(); }
     public override void RefreshFormatting() => EvaluateCurrent(false);

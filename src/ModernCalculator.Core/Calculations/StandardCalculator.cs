@@ -87,6 +87,8 @@ public sealed class StandardCalculator
     {
         if (Error is not null) return;
         var value = ExactValue;
+        if (pending.HasValue && replaceEntry && accumulator.HasValue)
+            value = accumulator.Value;
         if (pending.HasValue && !replaceEntry && accumulator.HasValue)
             value = Calculate(accumulator.Value, value, pending.Value);
         accumulator = value;
@@ -158,6 +160,9 @@ public sealed class StandardCalculator
         Entry = Invariant(percent);
         replaceEntry = false;
         completed = false;
+        // A standalone transformation starts a new operand, so equals must not
+        // revive the binary operation that produced the previous result.
+        if (pending is null) repeatedOperation = null;
         transformedEntry = true;
         if (hadCompletedExpression) Expression = $"Percent({Invariant(input)}) =";
     });

@@ -1,14 +1,37 @@
 # Developer ::> Gehan Fernando
 param(
+    [Parameter(Mandatory = $true)][string]$VerificationManifest,
     [Parameter(Mandatory = $true)][string]$UiReport,
     [string]$EngineReport = 'artifacts/TestResults/audit-final.trx',
     [ValidatePattern('^[A-Za-z][A-Za-z0-9-]*$')][string]$Edition = 'Audited',
     [ValidatePattern('^[A-Za-z][A-Za-z0-9-]*$')][string]$BuildOutput = 'AuditAcceptance',
-    [int]$ExpectedEngineTests = 283,
-    [int]$MinimumUiChecks = 205
+    [ValidateRange(1, [int]::MaxValue)][int]$ExpectedEngineTests = 283,
+    [ValidateRange(1, [int]::MaxValue)][int]$MinimumUiChecks = 205
 )
 $ErrorActionPreference = 'Stop'
+
+function Assert-CompleteEngineReport([xml]$Report, [int]$ExpectedCount) {
+    $summary = $Report.TestRun.ResultSummary
+    $counters = $summary.Counters
+    $message = "The complete $ExpectedCount-test engine report is required; every test must execute and pass."
+    if ($ExpectedCount -le 0 -or $null -eq $counters -or $summary.outcome -ne 'Completed') { throw $message }
+    foreach ($name in @('total', 'executed', 'passed')) {
+        $count = 0
+        if (-not [int]::TryParse($counters.GetAttribute($name), [ref]$count) -or $count -ne $ExpectedCount) { throw $message }
+    }
+    foreach ($counter in $counters.Attributes) {
+        if ($counter.Name -in @('total', 'executed', 'passed')) { continue }
+        $count = 0
+        if (-not [int]::TryParse($counter.Value, [ref]$count) -or $count -ne 0) { throw $message }
+    }
+    $testResults = @($Report.TestRun.Results.UnitTestResult)
+    if ($testResults.Count -ne $ExpectedCount -or @($testResults | Where-Object outcome -ne 'Passed').Count -ne 0) { throw $message }
+}
+
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+. (Join-Path $PSScriptRoot 'ReleaseEvidence.ps1')
+$verification = Get-Content -LiteralPath (Resolve-ReleasePath $projectRoot $VerificationManifest) -Raw | ConvertFrom-Json
+Assert-ReleaseManifest $projectRoot $verification
 $releaseFolder = Join-Path $projectRoot "artifacts/Aster-$Edition"
 $editionName = $Edition.ToLowerInvariant()
 $runtimeArchive = Join-Path $projectRoot "artifacts/Aster-$editionName-win-x64.zip"
@@ -22,9 +45,15 @@ $engineReportPath = [IO.Path]::GetFullPath((Join-Path $projectRoot $EngineReport
 $uiResult = Get-Content -LiteralPath $uiReportPath -Raw | ConvertFrom-Json
 [xml]$engineResult = Get-Content -LiteralPath $engineReportPath -Raw
 if ($uiResult.failed -ne 0 -or $uiResult.skipped -ne 0 -or $uiResult.focus -ne '' -or $uiResult.passed -lt $MinimumUiChecks) { throw 'A complete passing UI report is required.' }
-if ($engineResult.TestRun.ResultSummary.Counters.failed -ne '0' -or [int]$engineResult.TestRun.ResultSummary.Counters.passed -ne $ExpectedEngineTests) { throw "The complete $ExpectedEngineTests-test engine report is required." }
+Assert-CompleteEngineReport $engineResult $ExpectedEngineTests
+if ($ExpectedEngineTests -ne $verification.discoveredEngineTests -or
+    (Get-FileHash -LiteralPath $engineReportPath).Hash -ne $verification.reports[0].sha256 -or
+    (Get-FileHash -LiteralPath $uiReportPath).Hash -ne $verification.reports[1].sha256) { throw 'Reports do not match the verified release run.' }
 $builtFolder = Join-Path $projectRoot "src/ModernCalculator.WinForms/bin/$BuildOutput"
+Assert-ReleasePayload $releaseFolder @($verification.binaries)
 foreach ($file in @('Aster.exe', 'Aster.dll', 'ModernCalculator.Core.dll', 'ModernCalculator.Infrastructure.dll')) {
+    $verifiedBinary = @($verification.binaries | Where-Object path -eq "src/ModernCalculator.WinForms/bin/Release/net10.0-windows/win-x64/$file")
+    if ($verifiedBinary.Count -ne 1 -or (Get-FileHash -LiteralPath (Join-Path $releaseFolder $file)).Hash -ne $verifiedBinary[0].sha256) { throw "Published binary differs from verified release: $file" }
     if ((Get-FileHash -LiteralPath (Join-Path $releaseFolder $file)).Hash -ne (Get-FileHash -LiteralPath (Join-Path $builtFolder $file)).Hash) { throw "Published binary differs from acceptance build: $file" }
 }
 foreach ($file in @('ModernCalculator.Core.dll', 'ModernCalculator.Infrastructure.dll')) {
@@ -34,10 +63,9 @@ foreach ($file in @('ModernCalculator.Core.dll', 'ModernCalculator.Infrastructur
 $hostBytes = [IO.File]::ReadAllBytes((Join-Path $releaseFolder 'Aster.exe'))
 $peOffset = [BitConverter]::ToInt32($hostBytes, 0x3c)
 if ([BitConverter]::ToUInt16($hostBytes, $peOffset + 4) -ne 0x8664) { throw 'The published app host is not Windows x64.' }
-$docsFolder = New-Item -ItemType Directory -Path (Join-Path $releaseFolder 'docs') -Force
 $evidenceFolder = New-Item -ItemType Directory -Path (Join-Path $releaseFolder 'verification') -Force
-Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination $releaseFolder
-Get-ChildItem -LiteralPath (Join-Path $projectRoot 'docs') -File -Filter '*.md' | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $docsFolder.FullName }
+Copy-ReleaseDocumentation $projectRoot $releaseFolder
+Copy-Item -LiteralPath (Resolve-ReleasePath $projectRoot $VerificationManifest) -Destination (Join-Path $evidenceFolder.FullName 'manifest.json')
 Copy-Item -LiteralPath $uiReportPath -Destination (Join-Path $evidenceFolder.FullName 'ui-report.json')
 Copy-Item -LiteralPath $engineReportPath -Destination (Join-Path $evidenceFolder.FullName 'engine-tests.trx')
 foreach ($mode in @('Standard', 'Scientific', 'Programmer', 'Converter', 'Dates')) {
@@ -48,7 +76,9 @@ foreach ($mode in @('Standard', 'Scientific', 'Programmer', 'Converter', 'Dates'
 ASTER CALCULATOR — AUDITED EDITION
 
 Run Aster.exe. Keep the extracted folder together.
-Requires Windows 10/11 x64 and the .NET 10 Desktop Runtime. Works offline.
+Requires Windows x64 and the .NET 10 Desktop Runtime. Works offline, fully enabled.
+Supported Windows editions: https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md
+LICENSE contains the MIT license. No payment, key or activation is required.
 
 Normal centered startup; drag the brand/header, resize at the edges, and use
 the custom minimize, maximize/restore and close buttons. F1 opens Help.
@@ -64,16 +94,17 @@ Preferences changes are drafts until Save. Cancel, X and Escape discard them.
 
 Ctrl+1 through Ctrl+5 changes mode (alternate preset in Preferences → Window).
 There are no dropdowns or scrolling panels. Inline pages expose long values,
-all units and all64bits. Copy result keeps the complete stored numeric value.
+all units and all 64 bits. Copy result keeps the complete stored numeric value.
 
 README.md explains numeric precision, controls and persistence.
-docs/AUDIT_RESOLUTION.md accounts for every source-audit line.
-docs/VERIFICATION.md states executed checks and external validation limits.
+docs/development.md explains the build and verification workflow and its limits.
+docs/numeric-behavior.md describes each engine's precision and input contracts.
 verification/ contains the acceptance reports and five component previews.
+These are hidden component checks, not physical-input or monitor-transition tests.
 
 Source archive: Aster-audited-source.zip. Open ModernCalculator.sln and set
 ModernCalculator.WinForms as Startup Project. Core is a class library.
-'@ | ForEach-Object { $_.Replace('AUDITED EDITION', $Edition.ToUpperInvariant() + ' EDITION').Replace('Aster-audited-source.zip', "Aster-$editionName-source.zip") + "`nIndependent review findings and workflow coverage: docs/INDEPENDENT_REVIEW.md (when included).`n" } |
+'@ | ForEach-Object { $_.Replace('AUDITED EDITION', $Edition.ToUpperInvariant() + ' EDITION').Replace('Aster-audited-source.zip', "Aster-$editionName-source.zip") } |
     Set-Content -LiteralPath (Join-Path $releaseFolder 'START-HERE.txt') -Encoding utf8
 
 Add-Type -AssemblyName System.IO.Compression

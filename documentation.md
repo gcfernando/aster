@@ -15,6 +15,7 @@ Start with the Windows calculator overview, then use the references for calculat
 | [Numeric behavior and limits](docs/numeric-behavior.md) | Compare decimal and scientific precision, integer widths, rounding and date boundaries. |
 | [Build and test Aster](docs/development.md) | Run the engine tests, examine component reports and prepare an application folder. |
 | [WinForms component-check methodology](tests/ModernCalculator.UiChecks/README.md) | Filter hidden checks and interpret snapshots, layout diagnostics and DPI simulations. |
+| [Portable release guide](docs/release-guide.md) | Verify and package matching binaries; install, update, roll back and remove the fully enabled app. |
 
 ## Source and related projects
 

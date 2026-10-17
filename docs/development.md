@@ -55,6 +55,14 @@ dotnet test tests/ModernCalculator.Tests -c Release --no-restore --logger "conso
 
 Coverage includes decimal precision/state, scientific grammar/domains, base/bit operations, conversion round trips, date boundaries, culture-aware input, memory/history, undo/redo and persistence recovery. These tests do not open a window.
 
+The packaging report validator has a separate dependency-free PowerShell regression script:
+
+```powershell
+pwsh -NoProfile -File tests/PackageEvidence.Tests.ps1
+```
+
+It checks complete passing and incomplete, aborted or inconsistent TRX evidence without creating archives.
+
 To retain a machine-readable result:
 
 ```powershell
@@ -71,7 +79,7 @@ After the solution build:
 dotnet run --project tests/ModernCalculator.UiChecks -c Release --no-build -- artifacts/UiChecks
 ```
 
-Every run creates a unique child directory containing `report.json`, `report.txt`, isolated state and PNG snapshots. A second positional argument filters check names. A filtered run or exit code `0` alone is not a complete acceptance record: inspect `focus`, `passed`, `failed` and `skipped` in the JSON report.
+Every run creates a unique child directory containing `report.json`, `report.txt`, isolated state and PNG snapshots. A second positional argument filters check names. A filter that selects no checks fails explicitly. A filtered run or exit code `0` alone is not a complete acceptance record: inspect `focus`, `passed`, `failed` and `skipped` in the JSON report.
 
 The [component guide](../tests/ModernCalculator.UiChecks/README.md) explains filter behavior, diagnostics, DPI terminology and the limits of hidden rendering. Keep the report and snapshots together when reporting a regression.
 
@@ -91,15 +99,18 @@ Use the [README's framework-dependent or self-contained publish commands](../REA
 
 These commands produce local artifacts. Signing, an installer, an update service and public release publication are not implemented by the documented publish workflow.
 
+For the complete reproducible verification-to-package workflow, follow [the portable release guide](release-guide.md). `Verify-Release.ps1` discovers the engine count, requires complete passing engine/component reports and binds source inputs, test reports and application/test binaries by SHA-256 before and after execution. `Publish-Portable.ps1` validates that evidence, includes LICENSE and documentation, and verifies every archive entry. It produces a fresh local unsigned framework-dependent x64 candidate and does not publish it. Run `tests/ReleaseEvidence.Tests.ps1` for negative evidence-boundary regressions. The checked-in Windows CI workflow runs these checks and retains reports, without deployment.
+
 ## Specialized audit packaging
 
-[Package-Audited.ps1](../tools/Package-Audited.ps1) is a separate acceptance/archive helper. It does not build, run the checks or establish that the current source passed. It expects prepared reports, published binaries and corresponding build outputs, then compares binary hashes and verifies ZIP entries against their sources.
+[Package-Audited.ps1](../tools/Package-Audited.ps1) is a separate acceptance/archive helper. It does not build or run checks. It now requires the same fresh verification manifest as the portable publisher, plus its historical prepared reports, published binaries and corresponding build outputs. It rejects stale source/binaries/reports, compares binary hashes and verifies ZIP entries against their sources.
 
 | Parameter | Current script behavior |
 |---|---|
+| `VerificationManifest` | Required repository-relative path to a matching manifest produced by `Verify-Release.ps1`. Reports and published application bytes must match it. |
 | `UiReport` | Required repository-relative path to a completed `report.json`. It must have an empty `focus`, zero failed/skipped checks and at least `MinimumUiChecks` passed checks. |
 | `EngineReport` | Repository-relative TRX path; defaults to `artifacts/TestResults/audit-final.trx`. |
-| `ExpectedEngineTests` | Passed-engine-test count required by the script; its historical default is `283`. The script also requires zero engine failures. |
+| `ExpectedEngineTests` | Required total, executed and passed count; its historical default is `283`. The report must be completed, contain that many passing result entries, and have no nonzero failure, skip, abort or other outcome counters. |
 | `MinimumUiChecks` | Minimum passed-check count; its historical default is `205`. |
 | `Edition` | Archive/release label, default `Audited`. |
 | `BuildOutput` | Build-directory suffix under project `bin/` folders, default `AuditAcceptance`. |
@@ -108,9 +119,9 @@ The helper expects an already prepared `artifacts/Aster-<Edition>/` folder, comp
 
 Confirm the exact paths, expected counts and screenshot names against the script and the approved run before using it. Ordinary Release output from the commands above does not automatically satisfy these packaging assumptions.
 
-### Missing historical acceptance documents
+### Packaged evidence and documentation
 
-The packaging script's generated `START-HERE.txt` refers to `docs/VERIFICATION.md`, `docs/AUDIT_RESOLUTION.md` and `docs/INDEPENDENT_REVIEW.md`. Those historical documents are absent from this checkout. This development guide explains the current workflow; it does not recreate those findings or certify an audited release. Review the generated documentation and supply the actual evidence before distributing an audit-labelled archive.
+Generated `START-HERE.txt` links to this development guide, the numeric behavior reference and the reports copied into `verification/`. The package's label does not expand what those reports prove: hidden component snapshots do not establish physical-input, window-manager, screen-reader or native monitor-transition behavior. Review the actual reports and supply any required external validation before distribution.
 
 ## Contributing
 

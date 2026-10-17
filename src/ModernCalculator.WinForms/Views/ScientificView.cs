@@ -1,5 +1,7 @@
 // Developer ::> Gehan Fernando
 using System.Globalization;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using ModernCalculator.Core.Calculations;
 using ModernCalculator.Core.Expressions;
 using ModernCalculator.WinForms.Controls;
@@ -66,7 +68,8 @@ public sealed class ScientificView : ModeView
                 var label = labels[row][col];
                 var tone = label == "=" ? ButtonTone.Accent : char.IsAsciiDigit(label[0]) && label.Length == 1 ? ButtonTone.Number
                     : label is "+" or "−" or "×" or "÷" ? ButtonTone.Operator : ButtonTone.Normal;
-                var button = Ui.Button(label == "⌫" ? "" : label == "EXP" ? "×10ⁿ" : label, () => Press(label), tone,
+                var buttonText = label switch { "⌫" => "", "EXP" => "×10ⁿ", "." => CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator, _ => label };
+                var button = Ui.Button(buttonText, () => Press(label), tone,
                     label == "⌫" ? IconKind.Backspace : IconKind.None, ScientificName(label));
                 button.Margin = new(1); button.AccessibleDescription = FunctionHelp(label);
                 Ui.SetFont(button, label.Length > 3 ? 10 : 13);
@@ -100,6 +103,7 @@ public sealed class ScientificView : ModeView
 
     private static string ScientificName(string label) => label switch
     {
+        "." => "Decimal separator",
         "⌫" => "Backspace", "xʸ" => "Power", "EXP" => "Enter scientific exponent", "mod" => "Remainder",
         "root" => "Root with chosen degree", "logbase" => "Logarithm with chosen base",
         "Ans" => "Recall last successful answer", "ⁿ√x" => "Nth root", "logₐ(x)" => "Logarithm with chosen base", "π" => "Pi", "√x" => "Square root", "∛x" => "Cube root", "10ˣ" => "Ten to the power", "n!" => "Factorial", _ => label
@@ -115,12 +119,13 @@ public sealed class ScientificView : ModeView
     }
     private static string FunctionHelp(string label) => label switch
     {
+        "." => "Insert the regional decimal separator: " + CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator,
         "root" => $"Nth root: root(value{ArgumentSeparator} degree). The value comes first; the root degree comes second. Odd integer roots accept negative values.",
         "logbase" => $"Logarithm: logbase(value{ArgumentSeparator} base). The value comes first; the base comes second. Value and base must be positive; base cannot be 1.",
         "mod" => $"Remainder: mod(dividend{ArgumentSeparator} divisor). The first value is divided by the second; the divisor cannot be zero. This is not percentage.",
         "EXP" => "Scientific exponent entry: 2E3 means 2 times 10 cubed. Edit the selected exponent. This differs from e to the power x.",
         "eˣ" => "Exponential function exp(x): Euler's number e raised to x. Use the exponent-entry key for powers of 10 in a number.",
-        "Ans" => "Insert Ans, the last successful result. It survives clearing, edits and failed calculations. Scientific arithmetic uses approximately 15 significant digits.",
+        "Ans" => "Insert Ans, the last successful result. It survives clearing, edits and failed calculations. Scientific uses approximate binary64 arithmetic; accuracy depends on the calculation.",
         "n!" => "Factorial of the preceding value. Supports whole numbers from 0 through 170.",
         "asin" or "acos" or "atan" => "Inverse trigonometric function; its result uses the selected degree/radian angle mode.",
         "asinh" or "acosh" or "atanh" => "Inverse hyperbolic function. Hyperbolic arguments and results are dimensionless.",
@@ -142,27 +147,34 @@ public sealed class ScientificView : ModeView
 
     private void InsertBinaryTemplate(string function)
     {
-        var operand = afterEquals ? ScientificEditing.ExpressionLiteral(result, CultureInfo.CurrentCulture) : expression.SelectedText;
-        if (afterEquals) { expression.Clear(); afterEquals = false; }
+        var useAnswer = afterEquals && expression.SelectionLength == 0;
+        var operand = useAnswer ? ScientificEditing.ExpressionLiteral(result, CultureInfo.CurrentCulture) : expression.SelectedText;
         var template = ScientificEditing.BinaryTemplate(function, operand, CultureInfo.CurrentCulture);
-        var start = expression.SelectionStart;
-        expression.SelectedText = template.Text;
+        var start = useAnswer ? 0 : expression.SelectionStart;
+        if (!ReplaceSelection(template.Text, start, useAnswer ? expression.TextLength : expression.SelectionLength)) return;
         expression.Select(start + template.SelectionStart, template.SelectionLength);
         expression.Focus(); ShowHint(template.Prompt);
     }
     private void InsertExponent()
     {
-        if (afterEquals) { expression.Text = ScientificEditing.ExpressionLiteral(result, CultureInfo.CurrentCulture); expression.SelectionStart = expression.TextLength; }
-        var start = expression.SelectionStart;
-        var operand = expression.SelectedText;
+        var useAnswer = afterEquals && expression.SelectionLength == 0;
+        var start = useAnswer ? 0 : expression.SelectionStart;
+        var length = useAnswer ? expression.TextLength : expression.SelectionLength;
+        var operand = useAnswer ? ScientificEditing.ExpressionLiteral(result, CultureInfo.CurrentCulture) : expression.SelectedText;
         if (operand.Length == 0)
         {
             var prefix = expression.Text[..start];
-            var literal = System.Text.RegularExpressions.Regex.Match(prefix, @"(?<![\p{L}\p{Nd}_])\d+(?:[.,]\d*)?(?:[eE][+-]?\d+)?$", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
-            if (literal.Success) { start = literal.Index; operand = literal.Value; expression.Select(start, operand.Length); }
+            var format = CultureInfo.CurrentCulture.NumberFormat;
+            var decimalMark = "(?:" + string.Join("|", new[] { ".", format.NumberDecimalSeparator }.Distinct().Select(Regex.Escape)) + ")";
+            var sign = "(?:" + string.Join("|", new[] { format.NegativeSign, format.PositiveSign, "-", "−", "+" }
+                .Where(value => value.Length > 0).Distinct().Select(Regex.Escape)) + ")";
+            var pattern = @"(?<![\p{L}\p{Nd}_])(?:[0-9]+(?:" + decimalMark + @"[0-9]*)?|" + decimalMark + @"[0-9]+)(?:[eE]" + sign + @"?[0-9]+)?$";
+            var literal = Regex.Match(prefix, pattern, RegexOptions.CultureInvariant);
+            if (literal.Success) { start = literal.Index; operand = literal.Value; length = operand.Length; }
         }
         var template = ScientificEditing.ExponentTemplate(operand, CultureInfo.CurrentCulture);
-        afterEquals = false; expression.SelectedText = template.Text; expression.Select(start + template.SelectionStart, template.SelectionLength);
+        if (!ReplaceSelection(template.Text, start, length)) return;
+        afterEquals = false; expression.Select(start + template.SelectionStart, template.SelectionLength);
         expression.Focus(); ShowHint(FunctionHelp("EXP"));
     }
     public override string CopyText => hasResult && error is null ? result.ToString("G17", CultureInfo.CurrentCulture) : "";
@@ -170,7 +182,7 @@ public sealed class ScientificView : ModeView
     {
         if (NumberText.TryDouble(value, CultureInfo.CurrentCulture, out var number))
         {
-            if (double.IsFinite(number)) { Insert(ScientificEditing.ExpressionLiteral(number, CultureInfo.CurrentCulture)); return; }
+            if (double.IsFinite(number)) { InsertNumeric(number); return; }
         }
         Context.Status("Select a numeric result to reuse in Scientific.");
     }
@@ -182,8 +194,7 @@ public sealed class ScientificView : ModeView
     public void ReuseExact(BigDecimal value)
     {
         if (!value.TryToDouble(out var recalled)) { Context.Status("This stored number is outside Scientific's floating-point range."); return; }
-        Insert(ScientificEditing.ExpressionLiteral(recalled, CultureInfo.CurrentCulture));
-        if (value.SignificantDigits > 15) Context.Status("Scientific uses 15-digit precision. The stored value remains exact.");
+        if (InsertNumeric(recalled) && value.SignificantDigits > 15) Context.Status("Scientific recall rounds to binary64. The stored value remains exact.");
     }
     public override void FocusInput() => expression.Focus();
     public override bool Command(Keys key)
@@ -199,11 +210,11 @@ public sealed class ScientificView : ModeView
             case "=": Calculate(); break;
             case "Ans":
                 if (answer is null) { Context.Status("Ans is available after the first successful calculation."); break; }
-                Insert("Ans"); ShowHint("Ans recalls the last successful result, including after clearing or correcting an error."); break;
+                if (Insert("Ans")) ShowHint("Ans recalls the last successful result, including after clearing or correcting an error."); break;
             case "C": Clear(); break;
             case "⌫":
-                if (expression.SelectionLength > 0) expression.SelectedText = "";
-                else if (expression.SelectionStart > 0) { var start = expression.SelectionStart; expression.Text = expression.Text.Remove(start - 1, 1); expression.SelectionStart = start - 1; }
+                if (expression.SelectionLength > 0) ReplaceSelection("");
+                else if (expression.SelectionStart > 0) ReplaceSelection("", expression.SelectionStart - 1, 1);
                 expression.Focus(); break;
             case "sin": case "cos": case "tan": case "asin": case "acos": case "atan":
             case "sinh": case "cosh": case "tanh": case "asinh": case "acosh": case "atanh":
@@ -212,9 +223,9 @@ public sealed class ScientificView : ModeView
             case "√x": Wrap("sqrt"); break; case "∛x": Wrap("cbrt"); break;
             case "|x|": Wrap("abs"); break; case "1/x": Wrap("inv"); break;
             case "10ˣ": Wrap("pow10"); break; case "eˣ": Wrap("exp"); break; case "+/−": WrapNegative(); break;
-            case "x²": Insert("^2"); break; case "xʸ": Insert("^"); break;
-            case "x³": Insert("^3"); break;
-            case "n!": Insert("!"); ShowHint("Factorial applies to the preceding value. Only whole numbers from 0 to 170 are supported."); break;
+            case "x²": InsertPostfix("^2"); break; case "xʸ": InsertPostfix("^"); break;
+            case "x³": InsertPostfix("^3"); break;
+            case "n!": if (InsertPostfix("!")) ShowHint("Factorial applies to the preceding value. Only whole numbers from 0 to 170 are supported."); break;
             case "EXP": InsertExponent(); break;
             case ".": Insert(CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator); break;
             default: Insert(label); break;
@@ -228,47 +239,81 @@ public sealed class ScientificView : ModeView
     }
     private AngleUnit Angle => angles.SelectedIndex == 0 ? AngleUnit.Degrees : AngleUnit.Radians;
     // Invalidate copyable output after expression or angle-unit changes.
-    private void InvalidateResult() { afterEquals = false; error = null; hasResult = false; RefreshFormatting(); Context.Status("Press Enter to evaluate · Scientific uses 15-digit floating-point precision"); }
-    private void Clear() { expression.Clear(); result = 0; error = null; hasResult = false; afterEquals = false; RefreshFormatting(); expression.Focus(); }
-    private void Insert(string text)
+    private void InvalidateResult() { afterEquals = false; error = null; hasResult = false; RefreshFormatting(); Context.Status("Press Enter to evaluate · Approximate binary64 arithmetic · F1 explains precision"); }
+    private void Clear() { ReplaceSelection("", 0, expression.TextLength); result = 0; error = null; hasResult = false; afterEquals = false; RefreshFormatting(); expression.Focus(); }
+    private bool Insert(string text)
     {
-        if (afterEquals)
+        if (afterEquals && expression.SelectionLength == 0)
         {
             var previous = ScientificEditing.ExpressionLiteral(result, CultureInfo.CurrentCulture);
-            expression.Text = text[0] is '+' or '-' or '−' or '*' or '×' or '/' or '÷' or '^' or '%' or '!' ? $"({previous})" : "";
-            expression.SelectionStart = expression.TextLength;
+            var prefix = text[0] is '+' or '-' or '−' or '*' or '×' or '/' or '÷' or '^' or '%' or '!' ? $"({previous})" : "";
+            if (!ReplaceSelection(prefix + text, 0, expression.TextLength)) return false;
         }
-        expression.SelectedText = text;
-        expression.Focus(); afterEquals = false;
+        else if (!ReplaceSelection(text)) return false;
+        expression.Focus(); afterEquals = false; return true;
+    }
+    private bool InsertNumeric(double value)
+    {
+        // Recalled/pasted negative values are operands, not subtraction commands.
+        var replaceAnswer = afterEquals && expression.SelectionLength == 0;
+        if (!ReplaceSelection(ScientificEditing.ExpressionLiteral(value, CultureInfo.CurrentCulture),
+            replaceAnswer ? 0 : expression.SelectionStart, replaceAnswer ? expression.TextLength : expression.SelectionLength)) return false;
+        expression.Focus(); afterEquals = false; return true;
+    }
+    private bool InsertPostfix(string suffix)
+    {
+        if (expression.SelectionLength == 0) return Insert(suffix);
+        if (!ReplaceSelection("(" + expression.SelectedText + ")" + suffix)) return false;
+        expression.Focus(); afterEquals = false; return true;
     }
     private void Wrap(string name)
     {
-        if (afterEquals) { expression.Text = $"{name}({ScientificEditing.ExpressionLiteral(result, CultureInfo.CurrentCulture)})"; expression.SelectionStart = expression.TextLength; }
-        else if (expression.SelectionLength > 0) expression.SelectedText = $"{name}({expression.SelectedText})";
-        else Insert(name + "(");
+        if (expression.SelectionLength > 0) { if (!ReplaceSelection($"{name}({expression.SelectedText})")) return; }
+        else if (afterEquals) { if (!ReplaceSelection($"{name}({ScientificEditing.ExpressionLiteral(result, CultureInfo.CurrentCulture)})", 0, expression.TextLength)) return; }
+        else if (!Insert(name + "(")) return;
         expression.Focus(); afterEquals = false;
     }
     private void WrapNegative()
     {
-        var operand = afterEquals ? ScientificEditing.ExpressionLiteral(result, CultureInfo.CurrentCulture) : expression.Text;
-        expression.Text = operand.Length == 0 ? "-" : $"-({operand})";
-        expression.SelectionStart = expression.TextLength; expression.Focus();
+        var selected = expression.SelectionLength > 0;
+        var operand = selected ? expression.SelectedText : afterEquals ? ScientificEditing.ExpressionLiteral(result, CultureInfo.CurrentCulture) : expression.Text;
+        if (!ReplaceSelection(operand.Length == 0 ? "-" : $"-({operand})", selected ? expression.SelectionStart : 0,
+            selected ? expression.SelectionLength : expression.TextLength)) return;
+        expression.Focus(); afterEquals = false;
     }
+    // Native replacement retains the edit undo buffer; Text/SelectedText assignments clear it.
+    private bool ReplaceSelection(string text, int? start = null, int? length = null)
+    {
+        var selectionStart = start ?? expression.SelectionStart;
+        var selectionLength = length ?? expression.SelectionLength;
+        if (expression.TextLength - selectionLength + text.Length > ExpressionEvaluator.MaximumLength)
+        {
+            Context.Status($"This edit would exceed {ExpressionEvaluator.MaximumLength} characters. Shorten the expression or select more text to replace; no input was changed.");
+            return false;
+        }
+        expression.Select(selectionStart, selectionLength);
+        _ = ReplaceEditSelection(expression.Handle, 0x00c2 /* EM_REPLACESEL */, 1, text);
+        return true;
+    }
+    [DllImport("user32.dll", EntryPoint = "SendMessageW", CharSet = CharSet.Unicode)]
+    private static extern nint ReplaceEditSelection(nint window, uint message, nint canUndo, string text);
     private void Calculate()
     {
         try
         {
             result = EvaluateExpression();
             answer = result; hasResult = true; afterEquals = true; error = null;
+            // Template argument selection is an editing aid, not an explicit post-result edit.
+            expression.Select(expression.TextLength, 0);
             Context.Record("Scientific", $"{expression.Text} [{(Angle == AngleUnit.Degrees ? "DEG" : "RAD")}] =", result.ToString("G17", CultureInfo.InvariantCulture));
-            Context.Status($"Scientific: approximately 15-digit binary64 arithmetic; {Context.Settings.Precision} significant digits displayed. Ans updated.");
+            Context.Status($"Scientific: approximate binary64 arithmetic; {Context.Settings.Precision} significant digits displayed. Ans updated.");
         }
         catch (CalculationException ex) { hasResult = false; afterEquals = false; error = ex.Message; Context.Status(ex.Message); }
         RefreshFormatting();
     }
     public override void RefreshFormatting()
     {
-        display.AccessibleDescription = $"Scientific uses approximately 15 significant digits internally (binary64); the current display preference is {Context.Settings.Precision} significant digits. Copy and Ans retain the full stored result.";
+        display.AccessibleDescription = $"Scientific uses binary64 with about 15–17 decimal digits of representation; accuracy depends on the calculation. The current display preference is {Context.Settings.Precision} significant digits. Copy and Ans retain the full stored result.";
         display.Set(error is null ? (hasResult ? "Result · " : "Enter expression · ") + (Angle == AngleUnit.Degrees ? "degrees" : "radians") + $" · {Context.Settings.Precision} displayed digits" : "Check your expression",
             error ?? (hasResult ? NumberText.Format(result, CultureInfo.CurrentCulture, Context.Settings.Precision, Context.Settings.GroupDigits) : expression.TextLength == 0 ? "0" : "—"), error is not null);
     }

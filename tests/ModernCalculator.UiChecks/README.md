@@ -4,7 +4,7 @@
 
 This is a dependency-free Windows-only console harness targeting .NET 10 and Windows Forms. It references the application project directly and does not require a test framework or NuGet package.
 
-The harness covers calculator input/state, mode switching, stored results, conversion and date workflows, preferences, layout and rendering. Results belong to a specific executable and run: use that run's `report.json` for counts and outcomes. The historical verification/finding documents named in earlier audit tooling are absent from this checkout; see [the development guide](../../docs/development.md#missing-historical-acceptance-documents) for that limitation.
+The harness covers calculator input/state, mode switching, stored results, conversion and date workflows, preferences, layout and rendering. Results belong to a specific executable and run: use that run's `report.json` for counts and outcomes. See [packaged evidence and documentation](../../docs/development.md#packaged-evidence-and-documentation) for how the packaging helper uses these reports and their limits.
 
 For a separate visible walkthrough, [DesktopAudit](../../docs/development.md#run-a-visible-manual-walkthrough) hosts the production MainForm with fresh isolated data under its output `sessions/` directory. It sends no input and does not access the user's normal Aster data. It is optional and separate from this hidden-check executable.
 
@@ -26,7 +26,7 @@ For a focused top-level memory check:
 dotnet run --project tests/ModernCalculator.UiChecks -c Release --no-build -- artifacts/UiChecks "Standard exact"
 ```
 
-Filtering applies as each check is reached. A nested matrix check is reached only when its parent setup runs, so a child-only substring may select nothing. A filter that selects no checks can still return exit code `0`. Treat a focused run as diagnostic evidence, not as the complete suite.
+Filtering applies as each check is reached. A nested matrix check is reached only when its parent setup runs, so a child-only substring may select nothing. A filter that selects no checks records a `Check selection` failure and returns exit code `1`. Treat a focused run as diagnostic evidence, not as the complete suite.
 
 ## Read the results
 
@@ -46,7 +46,7 @@ $report | Select-Object generatedUtc, focus, passed, failed, skipped, screenshot
 $report.checks | Where-Object Status -eq 'FAIL'
 ```
 
-Exit code `1` means one or more checks failed. Exit code `0` means none failed; it does not prove checks were selected or that rendering was supported. For an unfiltered run, inspect `focus` (empty), `passed` (nonzero), `failed` and `skipped`. Unsupported snapshot rendering is recorded as a skip rather than a successful render. Compare counts with the actual run and source revision, not a permanent README count.
+Exit code `1` means one or more checks failed, including an empty selection. Exit code `0` means selected checks had no failures; it does not prove rendering was supported. For an unfiltered run, inspect `focus` (empty), `passed` (nonzero), `failed` and `skipped`. Unsupported snapshot rendering is recorded as a skip rather than a successful render. Compare counts with the actual run and source revision, not a permanent README count.
 
 A filtered run can record `actualDeviceDpi=0` when it bypasses the main matrix that populates the field. That is missing run data, not a statement about the monitor's DPI.
 
@@ -91,6 +91,8 @@ Each mode/theme/scale case creates a fresh form with that mode saved in isolated
 The 100%, 125%, 150%, **175%**, and 200% cases use relative `Control.Scale(SizeF)` layout simulations. The report also records the **actual** Windows `DeviceDpi`; when it is 144, the unscaled default/minimum cases exercise real 144-DPI hidden controls. Target-DPI sizing-policy calculations cover 96, 120, 144, 168 and 192 DPI against 1920×1080, 1366×768 and 2560×1440 physical-pixel working areas, for all five modes with the secondary panel both open and closed (150 cases). Policy cases are pure calculations, not monitor changes or rendered per-DPI forms. Neither type of simulation changes Windows DPI or proves native per-monitor transitions. Hidden `DrawToBitmap` snapshots do not verify desktop composition, real focus, physical input or screen-reader output. Caption checks verify the managed frameless configuration and available controls, not visible window-manager behavior. Some native rendering can differ from a shown window.
 
 ## Related documentation
+
+Commercial regressions also cover atomic Scientific length rejection/Undo, field-specific date recovery, malformed UTF-16 search, selected compact units, confirmed bulk clearing, retained drawer actions, privacy-allowlisted support metadata, lazily created modes and result-fit cache invalidation. These checks use isolated profiles and hidden controls; clipboard/browser adapters are injected rather than sending data externally. They do not establish live screen-reader behavior.
 
 - [Aster overview and quick start](../../README.md)
 - [Build, engine tests and manual walkthroughs](../../docs/development.md)

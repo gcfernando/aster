@@ -23,6 +23,9 @@ public sealed class ResultDisplay : UserControl, IThemedControl
     private bool fitting;
     private int page;
     private int pageCount = 1;
+    private FitState? lastFit;
+    private readonly record struct FitState(string Value, bool Error, Size Client, Size Number, int Dpi, int Page, nint Handle);
+    private FitState CurrentFitState() => new(value, error, ClientSize, number.ClientSize, DeviceDpi, page, number.IsHandleCreated ? number.Handle : 0);
     public string FullValue => value;
     public int PageIndex => page;
     public int PageCount => pageCount;
@@ -39,6 +42,7 @@ public sealed class ResultDisplay : UserControl, IThemedControl
         footer.Controls.Add(previous, 0, 0); footer.Controls.Add(detail, 1, 0); footer.Controls.Add(next, 2, 0);
         layout.Controls.Add(caption, 0, 0); layout.Controls.Add(number, 0, 1); layout.Controls.Add(footer, 0, 2); Controls.Add(layout);
         SizeChanged += (_, _) => FitNumber(); number.SizeChanged += (_, _) => FitNumber(); number.HandleCreated += (_, _) => FitNumber();
+        number.FontChanged += (_, _) => FitNumber(); DpiChangedAfterParent += (_, _) => FitNumber();
         layout.AfterLayout = FitNumber;
         Set("Ready", "0"); ResumeLayout(true);
     }
@@ -59,6 +63,14 @@ public sealed class ResultDisplay : UserControl, IThemedControl
     private void FitNumber()
     {
         if (fitting || IsDisposed || Disposing || Width <= 20 || Height <= 8) return;
+        if (lastFit == CurrentFitState() && ReferenceEquals(number.Font, numberFont))
+        {
+            // Native EDIT can reset its formatting rectangle after a resize/layout even
+            // when our measured viewport and font are unchanged. Retain the cached fit,
+            // but restore this native state without changing the user's selection.
+            RestoreFormattingRectangle();
+            return;
+        }
         fitting = true;
         try
         {
@@ -74,6 +86,7 @@ public sealed class ResultDisplay : UserControl, IThemedControl
             var pointSize = error ? 12f : 40f;
             var width = Math.Max(1, number.ClientSize.Width - 4);
             var height = Math.Max(1, number.ClientSize.Height - 2);
+            var measuredViewport = number.ClientSize;
             int columns = 1, lines = 1;
             while (true)
             {
@@ -113,12 +126,19 @@ public sealed class ResultDisplay : UserControl, IThemedControl
             number.SelectionStart = number.SelectionLength = 0;
             if (number.IsHandleCreated)
             {
-                var rectangle = new NativeRectangle { Right = number.ClientSize.Width, Bottom = number.ClientSize.Height };
-                _ = SendMessage(number.Handle, 0x00b3 /* EM_SETRECT */, 0, ref rectangle);
+                RestoreFormattingRectangle();
                 number.ScrollToCaret();
             }
+            // Use the measured viewport so a subsequent layout can invalidate stale metrics.
+            lastFit = CurrentFitState() with { Number = measuredViewport };
         }
         finally { fitting = false; }
+    }
+    private void RestoreFormattingRectangle()
+    {
+        if (!number.IsHandleCreated) return;
+        var rectangle = new NativeRectangle { Right = number.ClientSize.Width, Bottom = number.ClientSize.Height };
+        _ = SendMessage(number.Handle, 0x00b3 /* EM_SETRECT */, 0, ref rectangle);
     }
     private sealed class ResultLayout : TableLayoutPanel
     {

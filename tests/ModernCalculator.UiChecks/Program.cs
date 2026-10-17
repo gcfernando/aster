@@ -81,6 +81,20 @@ internal static class Program
         SharedAuditChecks.Run(Run);
         DialogAuditChecks.Run(Run);
         IndependentSharedChecks.Run(Run);
+        UsabilityAuditChecks.Run(Run);
+        WindowStateAuditChecks.Run(Run);
+        DeepUsabilityAuditChecks.Run(Run);
+        DeepWorkspaceAuditChecks.Run(Run);
+        DeepSharedAuditChecks.Run(Run);
+        CommercialUiChecks.Run(Run);
+        CommercialEngineeringChecks.Run(Run);
+
+        if (results.Count == 0)
+        {
+            const string detail = "No checks matched the requested filter. Use a top-level check name or run without a filter.";
+            results.Add(new CheckResult("Check selection", "FAIL", detail));
+            Console.WriteLine("FAIL Check selection: " + detail);
+        }
 
         var report = new
         {

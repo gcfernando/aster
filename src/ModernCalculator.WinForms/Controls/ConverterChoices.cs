@@ -22,6 +22,8 @@ public sealed class ConverterChoiceBrowser : UserControl, IThemedControl
     private readonly ToolTip tooltips = new();
     private readonly string emptyMessage;
     private IReadOnlyList<ConverterChoice> entries = [];
+    private sealed record SearchEntry(ConverterChoice Choice, string Terms, string Key, string? Symbol);
+    private SearchEntry[] searchEntries = [];
     private ConverterChoice[] filtered = [];
     private int offset;
     private int visibleCount = 3;
@@ -96,6 +98,13 @@ public sealed class ConverterChoiceBrowser : UserControl, IThemedControl
     public void SetEntries(IEnumerable<ConverterChoice> values, bool clearSearch = false)
     {
         entries = values.ToArray();
+        var previous = searchEntries.GroupBy(entry => entry.Choice.Key, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+        searchEntries = entries.Select(entry => previous.TryGetValue(entry.Key, out var cached) &&
+            cached.Choice.SearchTerms == entry.SearchTerms && cached.Choice.Symbol == entry.Symbol
+                ? cached with { Choice = entry }
+                : new SearchEntry(entry, UnitSearch.Normalize(entry.SearchTerms), UnitSearch.Normalize(entry.Key),
+                    entry.Symbol is null ? null : UnitSearch.Normalize(entry.Symbol))).ToArray();
         if (clearSearch && search.TextLength > 0) search.Clear();
         Filter();
     }
@@ -114,6 +123,8 @@ public sealed class ConverterChoiceBrowser : UserControl, IThemedControl
 
     public void AdaptCompact(bool compact)
     {
+        var selected = Array.FindIndex(filtered, entry => entry.Key == selectedKey);
+        var anchor = selected >= 0 ? selected : offset;
         visibleCount = compact ? 1 : 3;
         layout.RowStyles[0].Height = (compact ? 22 : 28) * DeviceDpi / 96f;
         layout.RowStyles[2].Height = (compact ? 22 : 26) * DeviceDpi / 96f;
@@ -123,7 +134,7 @@ public sealed class ConverterChoiceBrowser : UserControl, IThemedControl
             matches.RowStyles[index].Height = index < visibleCount ? 100f / visibleCount : 0;
             Ui.SetFont(buttons[index], compact ? 8 : 9);
         }
-        offset = 0;
+        offset = Math.Clamp(anchor / visibleCount * visibleCount, 0, Math.Max(0, (filtered.Length - 1) / visibleCount * visibleCount));
         RenderChoices();
     }
 
@@ -132,9 +143,9 @@ public sealed class ConverterChoiceBrowser : UserControl, IThemedControl
     {
         var query = UnitSearch.Normalize(search.Text);
         var tokens = query.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        filtered = entries.Where(entry => tokens.All(token => UnitSearch.Normalize(entry.SearchTerms).Contains(token, StringComparison.Ordinal)))
-            .OrderBy(entry => query.Length == 0 ? 2 : entry.Symbol is not null && UnitSearch.Normalize(entry.Symbol) == query ? 0
-                : UnitSearch.Normalize(entry.Key) == query ? 1 : 2).ToArray();
+        filtered = searchEntries.Where(entry => tokens.All(token => entry.Terms.Contains(token, StringComparison.Ordinal)))
+            .OrderBy(entry => query.Length == 0 ? 2 : entry.Symbol == query ? 0 : entry.Key == query ? 1 : 2)
+            .Select(entry => entry.Choice).ToArray();
         offset = 0;
         RenderChoices();
         FilterChanged?.Invoke();
@@ -213,6 +224,7 @@ public sealed class SearchableUnitSelector : UserControl
         selectedIndex = -1;
         browser.SetEntries(units.Select((unit, unitIndex) => new ConverterChoice(unit.Name, unit.ToString(), UnitSearch.Terms(unit), () => SelectedIndex = unitIndex, unit.Symbol)), true);
         SelectedIndex = index;
+        RevealSelection();
     }
     public void AdaptCompact(bool compact) => browser.AdaptCompact(compact);
     public void RevealSelection() { if (SelectedItem is not null) browser.Reveal(SelectedItem.Name); }
@@ -223,13 +235,16 @@ public static class UnitSearch
 {
     public static string Normalize(string text)
     {
-        var expanded = text.Replace("²", "2", StringComparison.Ordinal).Replace("³", "3", StringComparison.Ordinal)
+        // Rune enumeration replaces malformed UTF-16 with U+FFFD while retaining valid pairs.
+        var repaired = new StringBuilder(text.Length);
+        foreach (var rune in text.EnumerateRunes()) repaired.Append(rune.ToString());
+        var expanded = repaired.ToString().Replace("²", "2", StringComparison.Ordinal).Replace("³", "3", StringComparison.Ordinal)
             .Replace("°", "", StringComparison.Ordinal).ToLowerInvariant()
             .Replace("meter", "metre", StringComparison.Ordinal).Replace("liter", "litre", StringComparison.Ordinal);
         var result = new StringBuilder();
-        foreach (var character in expanded.Normalize(NormalizationForm.FormD))
-            if (CharUnicodeInfo.GetUnicodeCategory(character) != UnicodeCategory.NonSpacingMark)
-                result.Append(char.IsLetterOrDigit(character) ? character : ' ');
+        foreach (var rune in expanded.Normalize(NormalizationForm.FormD).EnumerateRunes())
+            if (Rune.GetUnicodeCategory(rune) != UnicodeCategory.NonSpacingMark)
+                result.Append(Rune.IsLetterOrDigit(rune) ? rune.ToString() : " ");
         return string.Join(' ', result.ToString().Split(' ', StringSplitOptions.RemoveEmptyEntries));
     }
 

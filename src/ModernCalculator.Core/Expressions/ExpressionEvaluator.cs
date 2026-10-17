@@ -38,8 +38,8 @@ public sealed class ExpressionEvaluator
             var result = Multiplicative();
             while (true)
             {
-                if (Take('+')) result = Finite(result + Multiplicative());
-                else if (Take('-') || Take('−')) result = Finite(result - Multiplicative());
+                if (TakeSign(false)) result = Finite(result + Multiplicative());
+                else if (TakeSign(true)) result = Finite(result - Multiplicative());
                 else return result;
             }
         }
@@ -73,8 +73,8 @@ public sealed class ExpressionEvaluator
             Enter();
             try
             {
-                if (Take('+')) return Unary();
-                if (Take('-') || Take('−')) return -Unary();
+                if (TakeSign(false)) return Unary();
+                if (TakeSign(true)) return -Unary();
                 return Power();
             }
             finally { depth--; }
@@ -117,13 +117,15 @@ public sealed class ExpressionEvaluator
                 position++;
                 while (position < text.Length && char.IsAsciiDigit(text[position])) position++;
             }
+            var literal = text[start..position].Replace(decimalSeparator, '.');
             if (position < text.Length && text[position] is 'e' or 'E')
             {
                 position++;
-                if (position < text.Length && text[position] is '+' or '-') position++;
+                var sign = TakeSign(false, false) ? "+" : TakeSign(true, false) ? "-" : "";
+                var exponentStart = position;
                 while (position < text.Length && char.IsAsciiDigit(text[position])) position++;
+                literal += "e" + sign + text[exponentStart..position];
             }
-            var literal = text[start..position].Replace(decimalSeparator, '.');
             if (!double.TryParse(literal, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))
                 throw Fail("A number, constant or function was expected.");
             // Reject nonzero literals that binary64 parsing would silently underflow to zero.
@@ -155,7 +157,12 @@ public sealed class ExpressionEvaluator
                 };
             }
             if (second is not null) throw Fail($"{name} accepts one argument.");
-            var radians = angle == AngleUnit.Degrees ? first / 180 * Math.PI : first;
+            // Reduce degrees before converting to radians so large exact turns
+            // do not lose their phase in the multiplication by pi.
+            var reducedDegrees = angle == AngleUnit.Degrees ? Math.IEEERemainder(first, 360) : first;
+            var radians = angle == AngleUnit.Degrees ? reducedDegrees * (Math.PI / 180) : first;
+            if ((name is "sin" or "tan") && angle == AngleUnit.Degrees && reducedDegrees != 0 && radians == 0)
+                throw Fail("The angle underflowed the floating-point range.");
             var result = name switch
             {
                 "sin" => Math.Sin(radians),
@@ -179,7 +186,7 @@ public sealed class ExpressionEvaluator
             return Finite(result);
         }
 
-        private double FromRadians(double value) => angle == AngleUnit.Degrees ? value / Math.PI * 180 : value;
+        private double FromRadians(double value) => angle == AngleUnit.Degrees ? value * (180 / Math.PI) : value;
         private double RequireRange(double value, double min, double max) => value < min || value > max
             ? throw Fail($"The argument must be between {min} and {max}.") : value;
         private double Log(double value, double @base)
@@ -229,6 +236,15 @@ public sealed class ExpressionEvaluator
         {
             SkipSpace();
             if (position >= text.Length || text[position] != character) return false;
+            position++; return true;
+        }
+        private bool TakeSign(bool negative, bool skipSpace = true)
+        {
+            if (skipSpace) SkipSpace();
+            var native = negative ? culture.NumberFormat.NegativeSign : culture.NumberFormat.PositiveSign;
+            if (native.Length > 0 && text.AsSpan(position).StartsWith(native, StringComparison.Ordinal))
+            { position += native.Length; return true; }
+            if (position >= text.Length || (negative ? text[position] is not ('-' or '−') : text[position] != '+')) return false;
             position++; return true;
         }
         private void Require(char character) { if (!Take(character)) throw Fail($"Expected '{character}'."); }

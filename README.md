@@ -12,6 +12,8 @@
 
 Use it to check a percentage, evaluate a formula, inspect an integer in four bases, repeat a unit conversion or compare dates. Built with **C# 14, .NET 10 and Windows Forms**, Aster runs calculations locally without an account or calculation service.
 
+All features are fully enabled. There is no payment prompt, product key or activation service.
+
 <p align="center">
   <a href="https://dotnet.microsoft.com/en-us/download/dotnet/10.0"><img src="https://img.shields.io/badge/.NET-10-512BD4?style=flat-square" alt=".NET 10"></a>
   <a href="Directory.Build.props"><img src="https://img.shields.io/badge/C%23-14-239120?style=flat-square" alt="C# 14"></a>
@@ -99,9 +101,9 @@ Launch Aster GUI with the Quick start command above, or run `Aster.exe` from a [
 1. **Choose a mode** across the top: Standard, Scientific, Programmer, Converter or Dates. Use on-screen controls, editable fields or the [keyboard shortcuts](#readme-shortcuts).
 2. **Keep and reuse results.** Header buttons copy/paste for the active mode. **Ctrl+H** opens searchable history and session memory; **Use result** recalls a card into a compatible mode.
 3. **Set your preferences.** Choose light, dark or system appearance, Automatic/Compact density, reduced hover motion, system high-contrast colors or always-on-top. Preferences changes apply with **Save**; Cancel, close or Escape discards the draft.
-4. **Arrange the window.** Drag the brand or empty header space, resize at edges/corners and maximize/restore within the monitor's working area. Aster GUI uses visible segments and explicit pages instead of application dropdowns or scrolling panels.
+4. **Arrange the window.** Drag the brand or empty header space, resize at edges/corners and maximize/restore within the monitor's working area. Mode and preferences changes retain your chosen dimensions within each mode's minimum and the monitor bounds. History adjusts width without resetting height. Compact density sets preferred startup dimensions. Aster GUI uses visible segments and explicit pages instead of application dropdowns or scrolling panels.
 
-History retains up to **200 calculations**. Search covers the entire journal, and previous/next controls traverse matching entries. Copy, delete or **Use result** acts on the current card. Each completed calculation creates a separate entry, including repeated equals in Standard and reevaluation in Scientific; a single Enter is routed once. History saving between sessions defaults to **off**.
+History retains up to **200 calculations**. Search covers the entire journal, and previous/next controls traverse matching entries. Copy, delete or **Use result** acts on the current card. Bulk clearing history or memory requires a second confirmation. Each completed calculation creates a separate entry, including repeated equals in Standard and reevaluation in Scientific; a single Enter is routed once. History saving between sessions defaults to **off**.
 
 Standard and Scientific share up to **20 decimal memory slots** for the session. Standard places memory above the keypad; Scientific places it below. **MA** opens all slots, **MS** stores a new slot, **MR** recalls the newest, **M+ / M−** updates it and **MC** clears memory. Recalling exact Standard memory into Scientific can round to binary64 without changing the saved value.
 
@@ -169,7 +171,7 @@ In Scientific, enter an expression and press Enter:
 
 Use explicit multiplication, such as `2*pi`. Dot-decimal locales separate arguments with commas; comma-decimal locales use semicolons, such as `logbase(81;3)`. Scientific literals accept a dot or the current decimal separator and exclude grouping separators.
 
-Choose **Powers & logs**, **Trigonometry** or **Hyperbolic** to access visible function banks. Expressions remain editable after equals. Editing one or changing DEG/RAD invalidates the old result until you evaluate again; `Ans` retains the last successful answer.
+Choose **Powers & logs**, **Trigonometry** or **Hyperbolic** to access visible function banks. Expressions remain editable after equals. Select an operand to apply a power, factorial or function to it; an explicit selection takes priority over continuing from the answer. Scientific keypad edits support **Ctrl+Z**. Editing an expression or changing DEG/RAD invalidates the old result until you evaluate again; `Ans` retains the last successful answer.
 
 ### 💻 Programmer
 
@@ -218,9 +220,9 @@ Preferences → Window also offers **Ctrl+Alt+1–5** for mode switching. Enter 
 | Engine | Precision and contract |
 | --- | --- |
 | **Standard** | Bounded base-10 `BigDecimal` backed by `BigInteger`. Up to 100 significant input digits; addition, subtraction and multiplication are exact within bounds. Division and square root round to 100 significant digits, midpoint-to-even. |
-| **Scientific** | Binary64 floating point, approximately 15 reliable significant decimal digits. Real-number expressions; no symbolic algebra or complex numbers. |
+| **Scientific** | Approximate binary64 arithmetic; about 15–17 decimal digits of representation, with operation-dependent rounding and cancellation. Real-number expressions; no symbolic algebra or complex numbers. |
 | **Programmer** | Fixed-width integers modulo `2^width`. Signed decimal uses two's complement; other bases show raw bits. |
-| **Converter** | Binary64 factors and offsets, approximately 15 reliable significant decimal digits; temperature inputs are validated against absolute zero. |
+| **Converter** | Approximate binary64 factors and offsets with operation-dependent accuracy; temperature inputs are validated against absolute zero. |
 | **Dates** | Date-only Gregorian arithmetic from year 0001 to 9999; no time-zone or daylight-saving calculations. |
 
 Display rounding does not change the underlying calculation. Scientific and Converter copy/history use round-trip (`G17`) values. Standard memory and history retain full bounded decimal results, including results longer than the new-input limit.
@@ -248,7 +250,7 @@ dotnet run --project src/ModernCalculator.WinForms -c Release --no-build
 
 The variable applies to processes started from that PowerShell session. Unset it with `Remove-Item Env:ASTER_DATA_DIRECTORY` to return subsequent launches to the default directory.
 
-State uses a temporary file in the same directory followed by replacement. Missing or corrupt data falls back to defaults; save failures remain visible, and session settings continue to work. Disabling history persistence removes saved history on the next successful save while preserving the session list and favorites. Multiple instances use **last writer wins** without merging histories. State is ordinary local JSON and is **not encrypted**.
+State uses a temporary file in the same directory followed by replacement. Missing data uses defaults; corrupt, locked or unreadable profiles produce a warning and use defaults. The loader bounds the bytes read from one open file. Save failures remain visible, and session settings continue to work. A save exceeding the **2 MiB** file limit preserves the previous file and asks you to reduce saved history before retrying. Disabling history persistence removes saved history on the next successful save while preserving the session list and favorites; calculations then avoid per-result profile writes. Multiple instances use **last writer wins** without merging histories. State is ordinary local JSON and is **not encrypted**.
 
 <a id="readme-architecture"></a>
 
@@ -339,7 +341,9 @@ To bundle the runtime for **Windows x64** instead:
 dotnet publish src/ModernCalculator.WinForms -c Release -r win-x64 --self-contained true -o artifacts/publish/win-x64
 ```
 
-This may download the matching runtime pack. Both commands create local publish folders. Share the full output folder appropriate to the destination machine. The specialized [audit packaging script](tools/Package-Audited.ps1) expects prepared acceptance reports and matching published/tested binaries. Its default paths, test counts and missing historical audit-document references belong to a separate acceptance workflow, explained in [specialized audit packaging](docs/development.md#specialized-audit-packaging). Use the direct publish commands for a regular build.
+This may download the matching runtime pack. Both commands create local publish folders. Keep the full folder together and include LICENSE. A bundled runtime needs servicing through a new application package; a framework-dependent build uses the compatible installed runtime. Check Microsoft's [.NET 10 supported Windows editions](https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md).
+
+For a verified local x64 portable candidate, use [the release guide](docs/release-guide.md): `tools/Verify-Release.ps1` runs complete checks and records source/binary/report hashes; `tools/Publish-Portable.ps1` accepts only matching evidence, includes notices and verifies the ZIP. It creates an unsigned framework-dependent candidate without publishing it. The specialized [audit packaging script](tools/Package-Audited.ps1) remains available for its historical prepared-folder workflow, described in [specialized audit packaging](docs/development.md#specialized-audit-packaging).
 
 <a id="readme-troubleshooting"></a>
 
@@ -368,7 +372,7 @@ This may download the matching runtime pack. Both commands create local publish 
 
 ## 🤝 Contributing
 
-Use the [issue tracker](https://github.com/gcfernando/aster/issues) for reproducible problems and proposed improvements. Include the mode, Windows/.NET version, regional settings and exact steps/input. For Aster GUI issues, add the theme, window size and display scaling; use sample data in screenshots.
+Use the [issue tracker](https://github.com/gcfernando/aster/issues) for reproducible problems and proposed improvements. F1 → Support information provides local version/build/runtime and display diagnostics that you can review and copy. Include exact steps and sample input. The diagnostic text excludes calculations, history, memory, usernames and profile paths; nothing is sent automatically. Use sample data in screenshots.
 
 Keep changes focused, preserve the numeric contracts and run the relevant engine tests and Windows component checks. Update documentation when behavior changes. Start with the [Core engines](https://github.com/gcfernando/aster/tree/main/src/ModernCalculator.Core) and [Aster GUI mode views](https://github.com/gcfernando/aster/tree/main/src/ModernCalculator.WinForms/Views) to trace how input reaches a calculation.
 

@@ -9,12 +9,13 @@ public sealed class HelpForm : BorderlessForm
 {
     protected override bool ResizableFrame => false;
     private readonly TableLayoutPanel body = Ui.Table(1, -1, -1, -1, -1);
-    private readonly SegmentedControl sections = new("Help topic", ["Keyboard", "Functions", "Numbers", "Window"]);
+    private readonly SegmentedControl sections = new("Help topic", ["Keyboard", "Functions", "Numbers", "Window", "Support"]);
     private readonly Label pageLabel = Ui.Label("", 9);
     private readonly CalcButton previous;
     private readonly CalcButton next;
     private readonly string[][] topics;
     private readonly Palette palette;
+    private readonly Label supportFeedback = Ui.Label("", 8);
     private int page;
     public HelpForm(AppSettings settings, Palette palette)
     {
@@ -43,7 +44,7 @@ public sealed class HelpForm : BorderlessForm
              "Operator precedence|Standard evaluates immediately. Scientific applies parentheses and precedence: 2 + 3 × 4 = 14.",
              "Memory actions|MA: all slots; MR: recall newest; MS: store a new slot; M+/M−: update newest; MC: clear session memory."],
             ["Input capacity|Standard accepts 100 significant input digits. Leading zeros do not count. Excess input is rejected with an explanation.",
-             "Computation precision|Standard uses bounded decimal arithmetic. Scientific and Converter use binary64, about 15 reliable significant digits.",
+             "Computation precision|Standard uses bounded decimal arithmetic. Scientific and Converter use binary64 (about 15–17 representation digits); accuracy depends on the calculation and input conditioning.",
              "Display rounding|Preferences → Numbers sets 3–15 displayed significant digits for Scientific and Converter. It does not change stored values.",
              "Long results|The result fits and wraps; digit-page controls expose any remaining text. Copy result always copies the complete stored value.",
              "Programmer integers|8/16/32/64-bit arithmetic wraps to the selected width. Signed values use two’s complement. Signed right shift extends the sign bit.",
@@ -56,9 +57,13 @@ public sealed class HelpForm : BorderlessForm
              "History and privacy|History holds 200 calculations. Optional persistence stores expressions/results/modes/timestamps locally; memory is session-only.",
              "Managing history|Open History to reuse, copy, search or delete. Preferences → History stages clearing; Save commits it and Cancel discards it.",
              "Saved conversion pairs|Save pair stores source/destination units. Favorites reopens the pair; Recent opens previous conversions.",
-             "Preferences Save/Cancel|Changes are drafts. Save applies them; Cancel, X and Escape discard them. Restore defaults also stays a draft."]
+             "Preferences Save/Cancel|Changes are drafts. Save applies them; Cancel, X and Escape discard them. Restore defaults also stays a draft."],
+            ["Aster Calculator " + SupportInfo.Version + "|Build: " + SupportInfo.Build,
+             "Local environment|" + System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription + " · " + System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture + " · " + System.Globalization.CultureInfo.CurrentCulture.Name,
+             "Private by default|Copy includes version, runtime, OS, culture, mode, theme and DPI. Calculations, history, memory, usernames and profile paths are excluded. Nothing is sent automatically.",
+             "Reporting a problem|" + SupportInfo.IssueTracker + "\r\nDescribe the steps and expected result; use sample input instead of private calculations. Aster is fully enabled and requires no account or activation."]
         ];
-        var root = Ui.Table(1, 42, 40, -100, 34); root.Padding = new(14, 6, 14, 10);
+        var root = Ui.Table(1, 42, 40, -100, 0, 34); root.Padding = new(14, 6, 14, 10);
         var heading = Ui.Table(2, -100); heading.ColumnStyles[0].Width = 90; heading.ColumnStyles[1].Width = 10;
         var title = Ui.Label("Help & keyboard shortcuts", 14, true); RegisterDragSurface(title); RegisterDragSurface(heading);
         var close = Ui.Button("", () => { DialogResult = DialogResult.Cancel; Close(); }, ButtonTone.Quiet, IconKind.Close, "Close help");
@@ -68,8 +73,27 @@ public sealed class HelpForm : BorderlessForm
         previous = Ui.Button("Previous", () => { page--; Rebuild(); }, name: "Previous help page");
         next = Ui.Button("Next", () => { page++; Rebuild(); }, name: "Next help page");
         pageLabel.TextAlign = ContentAlignment.MiddleCenter; pager.Controls.Add(previous, 0, 0); pager.Controls.Add(pageLabel, 1, 0); pager.Controls.Add(next, 2, 0);
-        root.Controls.Add(pager, 0, 3); Controls.Add(root);
-        sections.SelectedIndexChanged += (_, _) => { page = 0; Rebuild(); }; body.SizeChanged += (_, _) => Rebuild();
+        var supportActions = Ui.Table(3, -100); supportActions.Visible = false;
+        supportActions.Controls.Add(Ui.Button("Copy support information", () =>
+        {
+            var message = SupportInfo.Copy(SupportInfo.Capture(settings, palette, DeviceDpi));
+            supportFeedback.Text = message.StartsWith("Support information copied", StringComparison.Ordinal) ? "Copied. Nothing was sent." : "Clipboard busy. Try again.";
+            supportFeedback.AccessibleDescription = message; Ui.Announce(supportFeedback, message);
+        }, name: "Copy private support information"), 0, 0);
+        supportActions.Controls.Add(Ui.Button("Support site", () =>
+        {
+            var message = SupportInfo.OpenIssueTracker();
+            supportFeedback.Text = message.StartsWith("Support site opened", StringComparison.Ordinal) ? "Opened. Nothing was sent." : "Open the address shown above.";
+            supportFeedback.AccessibleDescription = message; Ui.Announce(supportFeedback, message);
+        }, name: "Open Aster issue tracker in browser"), 1, 0);
+        supportFeedback.AccessibleName = "Support copy feedback"; supportActions.Controls.Add(supportFeedback, 2, 0);
+        root.Controls.Add(supportActions, 0, 3); root.Controls.Add(pager, 0, 4); Controls.Add(root);
+        sections.SelectedIndexChanged += (_, _) =>
+        {
+            var support = sections.SelectedIndex == 4;
+            supportActions.Visible = support; root.RowStyles[3].Height = support ? 40 * DeviceDpi / 96f : 0;
+            page = 0; Rebuild();
+        }; body.SizeChanged += (_, _) => Rebuild();
         ResumeLayout(true); Rebuild(); Ui.Theme(this, palette);
     }
     private bool rebuilding;
@@ -79,7 +103,8 @@ public sealed class HelpForm : BorderlessForm
         if (rebuilding || IsDisposed) return; rebuilding = true;
         try
         {
-            var count = body.ClientSize.Height < 300 * DeviceDpi / 96 ? 2 : 4;
+            var compact = body.ClientSize.Height < 300 * DeviceDpi / 96;
+            var count = sections.SelectedIndex == 4 ? compact ? 1 : 2 : compact ? 2 : 4;
             var items = topics[sections.SelectedIndex]; var pageCount = (items.Length + count - 1) / count; page = Math.Clamp(page, 0, pageCount - 1);
             body.SuspendLayout(); while (body.Controls.Count > 0) { var control = body.Controls[0]; body.Controls.RemoveAt(0); control.Dispose(); }
             body.RowCount = count; body.RowStyles.Clear(); for (var index = 0; index < count; index++) body.RowStyles.Add(new(SizeType.Percent, 100f / count));

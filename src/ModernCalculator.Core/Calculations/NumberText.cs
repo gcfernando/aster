@@ -22,6 +22,7 @@ public static class NumberText
         value = BigDecimal.Zero;
         if (string.IsNullOrWhiteSpace(text) || text.Length > MaximumExactInputLength) return false;
         var input = text.Trim();
+        if (HasAmbiguousSeparators(input, culture.NumberFormat)) return false;
         return TryBigCulture(input, culture, out value) ||
             culture.NumberFormat.NumberDecimalSeparator != "." && TryBigCulture(input, CultureInfo.InvariantCulture, out value);
     }
@@ -39,7 +40,7 @@ public static class NumberText
         var decimalIndex = mantissa.IndexOf(format.NumberDecimalSeparator, StringComparison.Ordinal);
         var integer = (decimalIndex >= 0 ? mantissa[..decimalIndex] : mantissa).TrimStart('+', '-');
         var fraction = decimalIndex >= 0 ? mantissa[(decimalIndex + format.NumberDecimalSeparator.Length)..] : "";
-        var group = format.NumberGroupSeparator;
+        var group = DistinctGroupSeparator(format);
         if (group.Length > 0 && (fraction.Contains(group, StringComparison.Ordinal) || !ValidGroups(integer, group, format.NumberGroupSizes))) return false;
         var normalized = group.Length > 0 ? mantissa.Replace(group, "", StringComparison.Ordinal) : mantissa;
         normalized = normalized.Replace(format.NumberDecimalSeparator, ".", StringComparison.Ordinal);
@@ -57,11 +58,45 @@ public static class NumberText
         return text.StartsWith('−') ? "-" + text[1..] : text;
     }
 
+    private static string NormalizeNumericSigns(string text, NumberFormatInfo format)
+    {
+        text = NormalizeLeadingSign(text, format);
+        var exponentIndex = text.IndexOfAny(['e', 'E']);
+        return exponentIndex < 0 ? text : text[..(exponentIndex + 1)] + NormalizeLeadingSign(text[(exponentIndex + 1)..], format);
+    }
+
+    private static string DistinctGroupSeparator(NumberFormatInfo format) =>
+        format.NumberGroupSeparator == format.NumberDecimalSeparator ? "" : format.NumberGroupSeparator;
+
+    private static bool HasAmbiguousSeparators(string text, NumberFormatInfo format)
+    {
+        var separator = format.NumberDecimalSeparator;
+        if (separator != format.NumberGroupSeparator) return false;
+        var mantissa = NormalizeLeadingSign(text, format).Split('e', 'E')[0];
+        var first = mantissa.IndexOf(separator, StringComparison.Ordinal);
+        // A shared separator always means decimal here. Multiple occurrences
+        // must not be reinterpreted as invariant grouping after a parse failure.
+        return first >= 0 && mantissa.IndexOf(separator, first + separator.Length, StringComparison.Ordinal) >= 0;
+    }
+
+    private static string InvariantNumericText(string text, NumberFormatInfo format)
+    {
+        var exponentIndex = text.IndexOfAny(['e', 'E']);
+        var mantissa = exponentIndex >= 0 ? text[..exponentIndex] : text;
+        var group = DistinctGroupSeparator(format);
+        if (group.Length > 0) mantissa = mantissa.Replace(group, "", StringComparison.Ordinal);
+        mantissa = mantissa.Replace(format.NumberDecimalSeparator, ".", StringComparison.Ordinal);
+        // Grouping is only valid in the mantissa; leave the exponent intact so
+        // the invariant parser still rejects grouped or fractional exponents.
+        return mantissa + (exponentIndex >= 0 ? text[exponentIndex..] : "");
+    }
+
     public static bool TryDecimal(string? text, CultureInfo culture, out decimal value)
     {
         value = 0;
         if (string.IsNullOrWhiteSpace(text) || text.Length > MaximumInputLength) return false;
-        var input = text.Trim().Replace('−', '-');
+        var input = text.Trim();
+        if (HasAmbiguousSeparators(input, culture.NumberFormat)) return false;
         if (TryCulture(input, culture, out value)) return true;
         // Pasted invariant numbers are accepted only after the user's culture has had priority.
         return culture.NumberFormat.NumberDecimalSeparator != "." &&
@@ -72,17 +107,19 @@ public static class NumberText
     {
         value = 0;
         var format = culture.NumberFormat;
+        text = NormalizeNumericSigns(text, format);
         var exponentIndex = text.IndexOfAny(['e', 'E']);
         var mantissa = exponentIndex >= 0 ? text[..exponentIndex] : text;
         var decimalIndex = mantissa.IndexOf(format.NumberDecimalSeparator, StringComparison.Ordinal);
         var integer = (decimalIndex >= 0 ? mantissa[..decimalIndex] : mantissa).TrimStart('+', '-');
         var fraction = decimalIndex >= 0 ? mantissa[(decimalIndex + format.NumberDecimalSeparator.Length)..] : "";
-        var group = format.NumberGroupSeparator;
+        var group = DistinctGroupSeparator(format);
         if (group.Length > 0 && (fraction.Contains(group, StringComparison.Ordinal) ||
             !ValidGroups(integer, group, format.NumberGroupSizes))) return false;
-        var valid = decimal.TryParse(text, NumberStyles.Float | NumberStyles.AllowThousands, culture, out value);
+        var normalized = InvariantNumericText(text, format);
+        var valid = decimal.TryParse(normalized, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
         // TryParse can round fractional digits. Compare exact base-10 coefficients before accepting input.
-        return valid && IsExactDecimal(text, culture, value);
+        return valid && IsExactDecimal(normalized, CultureInfo.InvariantCulture, value);
     }
 
     private static bool IsExactDecimal(string text, CultureInfo culture, decimal value)
@@ -112,7 +149,8 @@ public static class NumberText
     {
         value = 0;
         if (string.IsNullOrWhiteSpace(text) || text.Length > MaximumInputLength) return false;
-        var input = text.Trim().Replace('−', '-');
+        var input = text.Trim();
+        if (HasAmbiguousSeparators(input, culture.NumberFormat)) return false;
         return TryFloatingCulture(input, culture, out value, allowGrouping) ||
             culture.NumberFormat.NumberDecimalSeparator != "." && TryFloatingCulture(input, CultureInfo.InvariantCulture, out value, allowGrouping);
     }
@@ -121,14 +159,15 @@ public static class NumberText
     {
         value = 0;
         var format = culture.NumberFormat;
+        text = NormalizeNumericSigns(text, format);
         var mantissa = text.Split('e', 'E')[0];
         var decimalIndex = mantissa.IndexOf(format.NumberDecimalSeparator, StringComparison.Ordinal);
         var integer = (decimalIndex >= 0 ? mantissa[..decimalIndex] : mantissa).TrimStart('+', '-');
         var fraction = decimalIndex >= 0 ? mantissa[(decimalIndex + format.NumberDecimalSeparator.Length)..] : "";
-        var group = format.NumberGroupSeparator;
+        var group = DistinctGroupSeparator(format);
+        if (!allowGrouping && group.Length > 0 && mantissa.Contains(group, StringComparison.Ordinal)) return false;
         if (group.Length > 0 && (fraction.Contains(group, StringComparison.Ordinal) || !ValidGroups(integer, group, format.NumberGroupSizes))) return false;
-        var styles = NumberStyles.Float | (allowGrouping ? NumberStyles.AllowThousands : NumberStyles.None);
-        return double.TryParse(text, styles, culture, out value) && double.IsFinite(value) &&
+        return double.TryParse(InvariantNumericText(text, format), NumberStyles.Float, CultureInfo.InvariantCulture, out value) && double.IsFinite(value) &&
             !(value == 0 && mantissa.Any(c => c is >= '1' and <= '9'));
     }
 
@@ -151,7 +190,7 @@ public static class NumberText
     {
         if (value == 0) return "0";
         var result = value.ToString($"G{Math.Clamp(precision, 3, 29)}", culture);
-        if (!grouping || result.Contains('E', StringComparison.OrdinalIgnoreCase)) return result;
+        if (!grouping || DistinctGroupSeparator(culture.NumberFormat).Length == 0 || result.Contains('E', StringComparison.OrdinalIgnoreCase)) return result;
         var separator = culture.NumberFormat.NumberDecimalSeparator;
         var fraction = result.Contains(separator, StringComparison.Ordinal) ? result.Split(separator)[1].Length : 0;
         return decimal.Parse(result, NumberStyles.Float, culture).ToString($"N{fraction}", culture);
@@ -160,7 +199,7 @@ public static class NumberText
     public static string Format(BigDecimal value, CultureInfo culture, int precision = 100, bool grouping = true)
     {
         var text = value.Round(Math.Clamp(precision, 1, BigDecimal.MaximumCoefficientDigits)).ToString(culture);
-        if (!grouping || culture.NumberFormat.NumberGroupSeparator.Length == 0) return text;
+        if (!grouping || DistinctGroupSeparator(culture.NumberFormat).Length == 0) return text;
         var negative = text.StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal);
         var sign = negative ? culture.NumberFormat.NegativeSign : "";
         if (negative) text = text[sign.Length..];
@@ -188,7 +227,7 @@ public static class NumberText
         if (!double.IsFinite(value)) throw new CalculationException("The result is outside the supported range.");
         if (value == 0) return "0";
         var text = value.ToString($"G{Math.Clamp(precision, 3, 15)}", culture);
-        return decimal.TryParse(text, NumberStyles.Float, culture, out var number) && number != 0
+        return TryDecimal(text, culture, out var number) && number != 0
             ? Format(number, culture, precision, grouping) : text;
     }
 }

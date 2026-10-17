@@ -45,8 +45,13 @@ public sealed class ProgrammerCalculator
     {
         if (string.IsNullOrWhiteSpace(input) || input.Length > 128) throw new CalculationException("Enter an integer of at most 128 characters.");
         if (BigInteger.TryParse(input, NumberStyles.Integer, CultureInfo.InvariantCulture, out var integer)) { SetValue(integer); return; }
-        if (NumberText.TryDecimal(input, CultureInfo.InvariantCulture, out var value) && value == decimal.Truncate(value))
-        { SetValue(new BigInteger(value)); return; }
+        // Read exponent notation in bounded exact arithmetic, so an integer
+        // does not become unusable merely because its history uses G17 text.
+        if (BigDecimal.TryParse(input, out var value) && value.Scale <= 0)
+        { SetValue(value.Coefficient * BigInteger.Pow(10, -value.Scale)); return; }
+        // Preserve the grouped invariant decimal text previously accepted here.
+        if (NumberText.TryDecimal(input, CultureInfo.InvariantCulture, out var decimalValue) && decimalValue == decimal.Truncate(decimalValue))
+        { SetValue(new BigInteger(decimalValue)); return; }
         throw new CalculationException("Only whole-number results in the supported input range can be reused in Programmer.");
     }
     public string Format(int numberBase)

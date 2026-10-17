@@ -88,6 +88,8 @@ public sealed class FlatNumberInput : UserControl, IThemedControl
     {
         var valid = TryGetValue(out var entered);
         decrease.Enabled = valid && entered > minimum; increase.Enabled = valid && entered < maximum;
+        // A corrected edit or assigned value must not keep a previous commit error.
+        if (valid) UpdateNames();
     }
     private void UpdateNames()
     {

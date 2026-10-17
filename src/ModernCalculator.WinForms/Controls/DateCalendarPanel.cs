@@ -96,8 +96,16 @@ public sealed class DateCalendarPanel : UserControl, IThemedControl
         try { month = month.AddMonths(amount); cursor = new(month.Year, month.Month, Math.Min(cursor.Day, DateTime.DaysInMonth(month.Year, month.Month))); RefreshMonth(); }
         catch (ArgumentOutOfRangeException) { }
     }
-    // Browse weeks without forcing the page back to the keyboard cursor.
-    private void ChangeWeekPage(int direction) { weekPage = Math.Clamp(weekPage + direction, 0, (6 / weeksPerPage) - 1); RefreshMonth(false); }
+    // Keep a keyboard entry point on the browsed page without changing the selected date.
+    private void ChangeWeekPage(int direction)
+    {
+        weekPage = Math.Clamp(weekPage + direction, 0, (6 / weeksPerPage) - 1);
+        var offset = ((int)month.DayOfWeek - (int)CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek + 7) % 7;
+        var firstDay = Math.Max(1, weekPage * weeksPerPage * 7 - offset + 1);
+        var lastDay = Math.Min(DateTime.DaysInMonth(month.Year, month.Month), (weekPage + 1) * weeksPerPage * 7 - offset);
+        cursor = new(month.Year, month.Month, Math.Clamp(cursor.Day, firstDay, lastDay));
+        RefreshMonth(false);
+    }
     private void RefreshMonth(bool exposeCursor = true)
     {
         var formatting = GregorianFormattingCulture();

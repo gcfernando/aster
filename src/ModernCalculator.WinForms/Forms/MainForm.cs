@@ -35,6 +35,7 @@ public sealed partial class MainForm : BorderlessForm, ITooltipHost
     private string mode = "Standard";
     private Palette palette;
     private bool drawerVisible;
+    private int drawerWidthExpansion;
     private string? persistenceWarning;
     private ModeView Current => views[mode];
 
@@ -86,11 +87,9 @@ public sealed partial class MainForm : BorderlessForm, ITooltipHost
         center.Controls.Add(viewHost, 0, 0); workspace.Controls.Add(center, 0, 0);
         BuildDrawer(); drawer.Visible = false; workspace.Controls.Add(drawer, 1, 0); root.Controls.Add(workspace, 0, 2);
         status.Padding = new(6, 0, 6, 0); status.AutoEllipsis = true; root.Controls.Add(status, 0, 3); Controls.Add(root);
-        views.Add("Standard", new StandardView(context)); views.Add("Scientific", new ScientificView(context));
-        views.Add("Programmer", new ProgrammerView(context)); views.Add("Converter", new ConverterView(context)); views.Add("Dates", new DateView(context));
         modeNavigation.SelectedIndexChanged += (_, _) => SwitchMode(new[] { "Standard", "Scientific", "Programmer", "Converter", "Dates" }[modeNavigation.SelectedIndex]);
-        context.JournalChanged += () => { RefreshDrawer(); SaveState(); };
-        context.MemoryChanged += RefreshDrawer;
+        context.JournalChanged += () => { CancelDrawerClear(); RefreshDrawer(); if (context.Settings.PersistHistory) SaveState(); };
+        context.MemoryChanged += () => { CancelDrawerClear(); RefreshDrawer(); };
         context.StatusChanged += message =>
         {
             var text = persistenceWarning is not null && !message.Contains(persistenceWarning, StringComparison.Ordinal)
@@ -114,7 +113,18 @@ public sealed partial class MainForm : BorderlessForm, ITooltipHost
 
     private void SwitchMode(string name)
     {
-        if (!views.ContainsKey(name)) return;
+        if (name is not ("Standard" or "Scientific" or "Programmer" or "Converter" or "Dates")) return;
+        if (name == mode && views.TryGetValue(name, out var current) && current.Parent == viewHost)
+        { if (Visible) current.FocusInput(); return; }
+        if (!views.ContainsKey(name))
+        {
+            // First visits pay construction cost; subsequent visits retain input and subscriptions.
+            views.Add(name, name switch
+            {
+                "Scientific" => new ScientificView(context), "Programmer" => new ProgrammerView(context),
+                "Converter" => new ConverterView(context), "Dates" => new DateView(context), _ => new StandardView(context)
+            });
+        }
         keyboardActionNavigation = false;
         // Detach cached views without disposing them so mode changes preserve session input.
         viewHost.Controls.Clear(); mode = name; viewHost.Controls.Add(Current);
@@ -124,7 +134,7 @@ public sealed partial class MainForm : BorderlessForm, ITooltipHost
         Ui.Theme(Current, palette); Current.RefreshFormatting(); if (Visible) Current.FocusInput();
         if (Visible) { ApplyWindowSizing(Screen.FromControl(this).WorkingArea, false); SetTooltips(Current); }
         context.Status(name switch { "Standard" => "100-digit input · Enter to calculate · F1 help",
-            "Scientific" => "Scientific functions use 15-digit floating-point precision",
+            "Scientific" => "Approximate binary64 arithmetic · F1 explains precision and domains",
             "Programmer" => "Four representations of the same integer · Select a row to change input base",
             "Converter" => "Conversions update as you type",
             _ => "Dates use YYYY-MM-DD · Choose elapsed or inclusive counting · F1 help" });
@@ -135,7 +145,7 @@ public sealed partial class MainForm : BorderlessForm, ITooltipHost
         PresentationSettings.ReducedMotion = context.Settings.ReducedMotion;
         BackColor = root.BackColor = header.BackColor = workspace.BackColor = palette.Window;
         foreach (Control child in header.Controls) child.BackColor = palette.Window;
-        status.BackColor = palette.Window; status.ForeColor = palette.Muted;
+        status.BackColor = palette.Window; status.ForeColor = persistenceWarning is null ? palette.Muted : palette.Error;
         foreach (var view in views.Values) Ui.Theme(view, palette);
         themeButton.Icon = palette.Dark ? IconKind.Sun : IconKind.Moon; themeButton.Invalidate();
         TopMost = context.Settings.AlwaysOnTop;
@@ -146,13 +156,17 @@ public sealed partial class MainForm : BorderlessForm, ITooltipHost
     protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); var dark = palette.Dark ? 1 : 0; _ = DwmSetWindowAttribute(Handle, 20, ref dark, sizeof(int)); }
     protected override void OnLoad(EventArgs e) { base.OnLoad(e); PrepareWindowLayout(Screen.FromControl(this).WorkingArea); }
     public void PrepareWindowLayout(Rectangle workingArea) { WindowState = FormWindowState.Normal; ApplyWindowSizing(workingArea, true); }
-    private void ApplyWindowSizing(Rectangle area, bool centerWindow)
+    private void ApplyWindowSizing(Rectangle area, bool centerWindow, int widthAdjustment = 0)
     {
+        var requestedSize = new Size(Width + widthAdjustment, Height);
         var metrics = WindowLayoutPolicy.Calculate(mode, area.Size, DeviceDpi, drawerVisible, context.Settings.Density == DensityPreference.Compact);
         MinimumSize = metrics.MinimumSize;
         if (WindowState == FormWindowState.Normal)
         {
-            Size = metrics.InitialSize;
+            // Startup uses the preferred size; subsequent changes respect the user's resize.
+            Size = centerWindow ? metrics.InitialSize : new(
+                Math.Clamp(requestedSize.Width, metrics.MinimumSize.Width, area.Width),
+                Math.Clamp(requestedSize.Height, metrics.MinimumSize.Height, area.Height));
             if (centerWindow) Location = new(area.Left + (area.Width - Width) / 2, area.Top + (area.Height - Height) / 2);
             KeepWindowInWorkingArea(area);
         }
@@ -162,6 +176,8 @@ public sealed partial class MainForm : BorderlessForm, ITooltipHost
     {
         base.OnDpiChanged(e);
         if (!layoutReady) return;
+        // The recorded expansion is in physical pixels, just like the scaled window bounds.
+        drawerWidthExpansion = (int)Math.Round(drawerWidthExpansion * (double)e.DeviceDpiNew / e.DeviceDpiOld);
         ApplyWindowSizing(Screen.FromControl(this).WorkingArea, false);
     }
     protected override void OnResize(EventArgs e) { base.OnResize(e); if (layoutReady && IsHandleCreated) UpdateResponsiveChrome(); }
@@ -173,6 +189,7 @@ public sealed partial class MainForm : BorderlessForm, ITooltipHost
         root.RowStyles[1].Height = (compact ? 34 : 60) * scale;
         root.RowStyles[3].Height = (compact ? 18 : 22) * scale;
         maximizeButton.Icon = WindowState == FormWindowState.Maximized ? IconKind.Restore : IconKind.Maximize;
+        maximizeButton.AccessibleName = WindowState == FormWindowState.Maximized ? "Restore window" : "Maximize window";
         maximizeButton.AccessibleDescription = WindowState == FormWindowState.Maximized ? "Restore the window to its normal size" : "Maximize within the monitor working area";
         maximizeButton.Invalidate();
         UpdateViewportPadding();
@@ -211,13 +228,22 @@ public sealed partial class MainForm : BorderlessForm, ITooltipHost
     }
     private void SetDrawer(bool visible)
     {
+        if (!visible) CancelDrawerClear();
         var changed = drawerVisible != visible;
         var delta = DesignTokens.DrawerWidth * DeviceDpi / 96;
         drawerVisible = visible; drawer.Visible = visible; workspace.ColumnStyles[1].Width = visible ? delta : 0;
         var area = Screen.FromControl(this).WorkingArea;
-        if (changed && Visible) ApplyWindowSizing(area, false);
+        if (changed && Visible) ResizeForDrawer(area, visible);
         KeepWindowInWorkingArea(area);
         drawerButton.Selected = visible; drawerButton.Invalidate(); if (visible) RefreshDrawer();
+    }
+    private void ResizeForDrawer(Rectangle area, bool opening)
+    {
+        var previousWidth = Width;
+        var adjustment = opening ? DesignTokens.DrawerWidth * DeviceDpi / 96 : -drawerWidthExpansion;
+        ApplyWindowSizing(area, false, adjustment);
+        // A monitor edge may limit expansion; closing returns only the space actually added.
+        drawerWidthExpansion = opening ? Math.Max(0, Width - previousWidth) : 0;
     }
     private void KeepWindowInWorkingArea(Rectangle area)
     {
@@ -235,7 +261,13 @@ public sealed partial class MainForm : BorderlessForm, ITooltipHost
     }
     private void OnSystemPreference(object sender, UserPreferenceChangedEventArgs e)
     {
-        if (!IsDisposed && IsHandleCreated) BeginInvoke(() => { if (!IsDisposed) ApplyPalette(); });
+        if (IsDisposed || Disposing || !IsHandleCreated) return;
+        try
+        {
+            BeginInvoke(() => { if (!IsDisposed && !Disposing) ApplyPalette(); });
+        }
+        // SystemEvents is raised on a different thread; the handle can disappear after the check.
+        catch (InvalidOperationException) when (IsDisposed || Disposing || !IsHandleCreated) { }
     }
     private void SetTooltips(Control parent)
     {
