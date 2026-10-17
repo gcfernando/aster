@@ -58,6 +58,8 @@ Use it to check a percentage, evaluate a formula, inspect an integer in four bas
 | [Development and testing](docs/development.md) | Restore/build, xUnit results, hidden component checks, manual walkthroughs and audit packaging assumptions. |
 | [Component-check methodology](tests/ModernCalculator.UiChecks/README.md) | Running/filtering the WinForms harness and interpreting reports, snapshots and DPI simulations. |
 
+[Documentation index](documentation.md) collects these guides in one place.
+
 <a id="readme-quick-start"></a>
 
 ## 🚀 Quick start
@@ -86,7 +88,7 @@ To run on another Windows computer, [publish a distributable folder](#readme-pub
 
 ## 🖥️ Aster GUI — Graphical User Interface
 
-**Aster GUI is Aster Calculator's existing native Windows Forms desktop interface.** It is implemented in [ModernCalculator.WinForms](src/ModernCalculator.WinForms), uses the Core calculation engines and Infrastructure state store, and publishes as **`Aster.exe`**.
+**Aster GUI is Aster Calculator's existing native Windows Forms desktop interface.** It is implemented in [ModernCalculator.WinForms](https://github.com/gcfernando/aster/tree/main/src/ModernCalculator.WinForms), uses the Core calculation engines and Infrastructure state store, and publishes as **`Aster.exe`**.
 
 Launch Aster GUI with the Quick start command above, or run `Aster.exe` from a [published folder](#readme-publishing). A framework-dependent folder needs the **.NET 10 Desktop Runtime** on the destination computer; a self-contained folder includes its matching runtime. The optional `ASTER_DATA_DIRECTORY` setting selects a local profile directory; see [configuration and local data](#readme-configuration).
 
@@ -268,10 +270,10 @@ flowchart TD
 
 | Project or setting | Responsibility |
 | --- | --- |
-| [ModernCalculator.Core](src/ModernCalculator.Core) | `net10.0` engines, bounded `BigDecimal`/`BigInteger` arithmetic, expression grammar, integer operations, conversions, dates, memory and history; no Windows Forms references. |
-| [ModernCalculator.Infrastructure](src/ModernCalculator.Infrastructure) | Validated `AppSettings` and `System.Text.Json` state storage; references Core. |
-| [ModernCalculator.WinForms](src/ModernCalculator.WinForms) | `net10.0-windows` GUI executable, forms, mode views, custom controls, vector icons, themes and PerMonitorV2 configuration; references both libraries. |
-| [ModernCalculator.Tests](tests/ModernCalculator.Tests) | xUnit, Microsoft.NET.Test.Sdk and the Visual Studio test adapter. |
+| [ModernCalculator.Core](https://github.com/gcfernando/aster/tree/main/src/ModernCalculator.Core) | `net10.0` engines, bounded `BigDecimal`/`BigInteger` arithmetic, expression grammar, integer operations, conversions, dates, memory and history; no Windows Forms references. |
+| [ModernCalculator.Infrastructure](https://github.com/gcfernando/aster/tree/main/src/ModernCalculator.Infrastructure) | Validated `AppSettings` and `System.Text.Json` state storage; references Core. |
+| [ModernCalculator.WinForms](https://github.com/gcfernando/aster/tree/main/src/ModernCalculator.WinForms) | `net10.0-windows` GUI executable, forms, mode views, custom controls, vector icons, themes and PerMonitorV2 configuration; references both libraries. |
+| [ModernCalculator.Tests](https://github.com/gcfernando/aster/tree/main/tests/ModernCalculator.Tests) | xUnit, Microsoft.NET.Test.Sdk and the Visual Studio test adapter. |
 | [Directory.Build.props](Directory.Build.props) | C# 14, nullable reference types, implicit usings, deterministic builds and warnings treated as errors. |
 
 Mouse and keyboard routes share engine actions. The scientific parser is a bounded recursive-descent parser, not a scripting engine.
@@ -368,7 +370,7 @@ This may download the matching runtime pack. Both commands create local publish 
 
 Use the [issue tracker](https://github.com/gcfernando/aster/issues) for reproducible problems and proposed improvements. Include the mode, Windows/.NET version, regional settings and exact steps/input. For Aster GUI issues, add the theme, window size and display scaling; use sample data in screenshots.
 
-Keep changes focused, preserve the numeric contracts and run the relevant engine tests and Windows component checks. Update documentation when behavior changes. Start with the [Core engines](src/ModernCalculator.Core) and [Aster GUI mode views](src/ModernCalculator.WinForms/Views) to trace how input reaches a calculation.
+Keep changes focused, preserve the numeric contracts and run the relevant engine tests and Windows component checks. Update documentation when behavior changes. Start with the [Core engines](https://github.com/gcfernando/aster/tree/main/src/ModernCalculator.Core) and [Aster GUI mode views](https://github.com/gcfernando/aster/tree/main/src/ModernCalculator.WinForms/Views) to trace how input reaches a calculation.
 
 <a id="readme-license"></a>
 

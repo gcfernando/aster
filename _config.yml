@@ -1,0 +1,48 @@
+# GitHub Pages documentation; application settings remain in the calculator.
+url: "https://gcfernando.github.io"
+baseurl: "/aster"
+repository: gcfernando/aster
+title: "Aster Windows Calculator"
+description: "An offline Windows calculator with standard, scientific, programmer, unit conversion and date modes, built with C# and .NET 10."
+lang: en
+theme: jekyll-theme-primer
+plugins:
+  - jekyll-sitemap
+projects_hub: https://gcfernando.github.io/gcfernando/projects/
+project_category: "Desktop & utilities"
+exclude:
+  - bin
+  - obj
+  - artifacts
+  - TestResults
+  - packages
+  - node_modules
+  - vendor
+  - .local
+  - .claude
+  - .agents
+  - .codex
+
+# The component-harness README is intentional public developer documentation.
+defaults:
+  - scope:
+      path: "README.md"
+    values:
+      title: "Aster: Offline Windows Calculator with C# and .NET 10"
+      description: "Use Aster for arithmetic, scientific expressions, programmer calculations, unit conversion and dates. Build the offline Windows Forms app from source."
+      image: /docs/images/standard-light.png
+  - scope:
+      path: "docs/development.md"
+    values:
+      title: "Build and Test Aster: .NET 10 Windows Forms Calculator"
+      description: "Build Aster on Windows, run calculation and persistence tests, inspect WinForms component reports and prepare a distributable application folder."
+  - scope:
+      path: "docs/numeric-behavior.md"
+    values:
+      title: "Aster Calculator Numeric Behavior: Precision, Rounding and Limits"
+      description: "Understand Aster's decimal precision, scientific expressions, fixed-width integer arithmetic, unit conversion and date calculation limits."
+  - scope:
+      path: "tests/ModernCalculator.UiChecks/README.md"
+    values:
+      title: "Aster WinForms Component Checks: Run Tests and Read Reports"
+      description: "Run Aster's hidden Windows Forms component harness, filter checks and interpret reports, snapshots, layout diagnostics and DPI simulations."
