@@ -128,3 +128,7 @@ Generated `START-HERE.txt` links to this development guide, the numeric behavior
 ## Contributing
 
 Preserve the [numeric contracts](numeric-behavior.md), keep changes focused and run the appropriate engine/component checks. For a regression report, include the exact input, mode, regional settings and environment, plus relevant TRX or component artifacts. See the [contribution section](../README.md#readme-contributing) for the issue tracker and UI-reporting details.
+
+## Related documentation
+
+[Documentation index](../documentation.md) · [Portable release guide](release-guide.md) · [Numeric contracts](numeric-behavior.md)

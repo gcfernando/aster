@@ -97,3 +97,5 @@ Commercial regressions also cover atomic Scientific length rejection/Undo, field
 - [Aster overview and quick start](../../README.md)
 - [Build, engine tests and manual walkthroughs](../../docs/development.md)
 - [Numeric behavior and precision](../../docs/numeric-behavior.md)
+
+[Documentation index](../../documentation.md) collects the user, numeric and release guides.

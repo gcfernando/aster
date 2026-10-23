@@ -7,16 +7,26 @@ permalink: /documentation/
 
 # Aster Calculator Documentation
 
-Start with the Windows calculator overview, then use the references for calculation limits and development. Aster is an offline C# and .NET 10 Windows Forms application.
+Choose the reference for the calculation model, local build or portable Windows package you are working with.
 
-| Guide | What you can learn |
+## 🧭 Choose a guide
+
+| Task | Guide |
 |---|---|
-| [Aster overview and setup](README.md) | Build and launch the app; use standard, scientific, programmer, unit conversion and date modes. |
-| [Numeric behavior and limits](docs/numeric-behavior.md) | Compare decimal and scientific precision, integer widths, rounding and date boundaries. |
-| [Build and test Aster](docs/development.md) | Run the engine tests, examine component reports and prepare an application folder. |
-| [WinForms component-check methodology](tests/ModernCalculator.UiChecks/README.md) | Filter hidden checks and interpret snapshots, layout diagnostics and DPI simulations. |
-| [Portable release guide](docs/release-guide.md) | Verify and package matching binaries; install, update, roll back and remove the fully enabled app. |
+| Install and use the calculator | [README quick start](README.md#readme-quick-start) and [mode examples](README.md#readme-usage) |
+| Understand precision and range limits | [Numeric behavior](docs/numeric-behavior.md) |
+| Build and run engine tests | [Development guide](docs/development.md) |
+| Interpret hidden UI reports | [WinForms component-check methodology](tests/ModernCalculator.UiChecks/README.md) |
+| Verify, package, update or remove the app | [Portable release guide](docs/release-guide.md) |
 
-## Source and related projects
+## 🔗 Source references
 
-[Aster source on GitHub](https://github.com/gcfernando/aster) · [All developer projects](https://gcfernando.github.io/gcfernando/projects/)
+[Solution](ModernCalculator.sln) · [SDK selection](global.json) · [Windows verification workflow](.github/workflows/verify.yml)
+
+Engine tests, hidden component snapshots and visible manual walkthroughs prove different things. Follow the development guide before interpreting an artifact as acceptance evidence.
+
+## 🌐 Published documentation
+
+This index is also rendered by the repository's GitHub Pages site. Relative links above point to the authored repository documents; package READMEs target NuGet readers and may use absolute GitHub links.
+
+[Repository](https://github.com/gcfernando/aster) · [Project overview](README.md)

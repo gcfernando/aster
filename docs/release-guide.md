@@ -1,4 +1,8 @@
-# Fully enabled portable distribution
+<a id="fully-enabled-portable-distribution"></a>
+
+# Aster Portable Release Guide
+
+Prepare, inspect and install an unsigned Windows x64 candidate with evidence tied to its source and binaries. Maintainers should read the prerequisites below before running the verification helpers.
 
 Aster works locally without an account, payment, key, activation or feature restrictions. It retains the MIT license. Application projects have no third-party NuGet dependencies; the framework-dependent portable package uses a separately installed Microsoft .NET Desktop Runtime. It contains no bundled runtime. The local workflow below neither signs nor publishes a release.
 
@@ -11,6 +15,12 @@ After a push to `main`, GitHub Actions runs release-helper checks, complete engi
 Successful runs also retain an **Aster-win-x64** artifact for 30 days and verification reports for 14 days on the [workflow's Actions page](https://github.com/gcfernando/aster/actions/workflows/verify.yml). Downloading workflow artifacts requires a GitHub login. Pull requests and manual workflow runs produce artifacts without publishing; an old rerun cannot replace a newer main preview. Build/test failures leave the existing release alone. Asset replacement is not atomic: if an upload fails, use its complete Actions artifact and rerun the current main workflow's failed jobs. A missing link or checksum mismatch during an update should be retried after publication completes.
 
 The publication job uses only the scoped `GITHUB_TOKEN` with `contents: write`; build and pull-request jobs retain read-only repository permissions. Do not use the reserved `latest` tag for a manual release. The publisher refuses to replace an unmarked, stable or immutable release. If repository policy forbids the moving tag or release writes, publication fails visibly while the verified Actions artifact remains available. No signing certificate or personal access token is stored by this workflow.
+
+## Prerequisites
+
+- Windows x64, PowerShell 7 and the .NET 10 SDK selected by [global.json](../global.json).
+- A complete repository checkout and access to NuGet for an initial restore.
+- A Windows desktop session for the hidden WinForms harness; see its [methodology and limitations](../tests/ModernCalculator.UiChecks/README.md).
 
 ## Prepare and verify a candidate
 
@@ -60,3 +70,7 @@ The local workflow prepares an unsigned candidate and CI exposes it as a preview
 - Version/release notes, numeric limitations, known issues, support ownership and runtime/security update responsibility.
 
 The tested development host and actual results belong in the audit evidence. They do not substitute for a supported-OS matrix or clean-machine run. Check the linked CI run for the actual remote build, verification and preview-publication result.
+
+## Related documentation
+
+[Documentation index](../documentation.md) · [Development and evidence contracts](development.md) · [Numeric behavior](numeric-behavior.md)

@@ -49,56 +49,29 @@ All features are fully enabled. There is no payment prompt, product key or activ
 
 </details>
 
-<a id="readme-documentation"></a>
+## 🔎 Overview
 
-## 📚 Documentation
+Aster brings five local calculator modes to Windows users who need reusable results and explicit precision limits. Start with the mode table below, then use the [documentation index](documentation.md) for the numeric, development and release references.
 
-| Start here | What it covers |
-|---|---|
-| [Quick start](#readme-quick-start) | Build and launch the Windows calculator. |
-| [Modes and usage](#readme-usage) | Decimal arithmetic, scientific expressions, programmer bases, unit conversion and dates. |
-| [Numeric behavior reference](docs/numeric-behavior.md) | Precision, rounding, range limits and state/input contracts for each engine. |
-| [Development and testing](docs/development.md) | Restore/build, xUnit results, hidden component checks, manual walkthroughs and audit packaging assumptions. |
-| [Component-check methodology](tests/ModernCalculator.UiChecks/README.md) | Running/filtering the WinForms harness and interpreting reports, snapshots and DPI simulations. |
-| [Portable release guide](docs/release-guide.md) | Verify and package matching binaries; install, update, roll back and remove the app. |
+<a id="-features-and-real-world-use-cases"></a>
 
-[Documentation index](documentation.md) collects these guides in one place.
+<a id="readme-features"></a>
 
-<a id="readme-quick-start"></a>
+## ✨ Features
 
-## 🚀 Quick start
+Aster keeps several kinds of calculation in one local workspace. Choose the mode that matches the task and its precision model:
 
-### Download and run
+| Your task | Mode | Verified tools |
+| --- | --- | --- |
+| Check a percentage, subtotal or decimal calculation | **Standard** | Up to **100 significant input digits**; exact bounded addition/subtraction/multiplication; percentages, square/root/reciprocal, repeated equals and calculator undo/redo. |
+| Work through numerical formulas or scientific exercises | **Scientific** | Editable expressions, precedence, parentheses, powers, roots, factorials, constants, logarithms, trig/inverse trig, hyperbolic/inverse hyperbolic functions, DEG/RAD and `Ans`. |
+| Inspect integer representations or debug bit operations | **Programmer** | Synchronized DEC/HEX/OCT/BIN; 8/16/32/64-bit signed/unsigned arithmetic; wrapping, bitwise operations, shifts, remainder and a paged bit editor. |
+| Compare measurements or repeat a unit conversion | **Converter** | Twelve categories; searchable unit names/symbols/English aliases; live results; swap, Favorites and Recent; explicit history saving. |
+| Compare dates or adjust a calendar date | **Dates** | Elapsed/inclusive counting, calendar breakdown, ISO input, inline calendars, Today/Swap/Reset, signed intervals and month-end clamping. |
 
-1. Download **[Aster-win-x64.zip — latest main preview](https://github.com/gcfernando/aster/releases/download/latest/Aster-win-x64.zip)**. [Release notes and SHA-256 checksum](https://github.com/gcfernando/aster/releases/tag/latest) identify the published commit and passing build.
-2. Install the **[.NET 10 Desktop Runtime for Windows x64](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)** if it is not already installed. Choose **Desktop Runtime**, rather than the ASP.NET Core runtime.
-3. Right-click the ZIP, select **Extract All**, then open **`Aster.exe`** in the extracted folder. Keep all extracted files together.
+The converter covers **length, mass, temperature, area, volume, time, speed, data storage, energy, power, pressure and angles**. US/Imperial volumes and decimal/binary data prefixes are distinguished.
 
-This fully enabled download is an **unsigned preview** built automatically after a push to `main` passes verification. It may have issues that automated tests cannot detect. Use a supported Windows x64 edition; see the [installation, update and rollback guide](docs/release-guide.md). Updates are manual: close Aster and extract the new ZIP into a separate folder. Download the ZIP asset rather than GitHub's source-code archives.
-
-If a new build is still running or fails its checks, use the previously published preview. Each successful verification run also provides an **Aster-win-x64** artifact on the [Actions page](https://github.com/gcfernando/aster/actions/workflows/verify.yml), retained for 30 days; downloading Actions artifacts requires a GitHub login. The release download above is the permanent public link.
-
-### Build from source
-
-Build from source on **Windows** with the **[.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)** and **Git**. See Microsoft's [supported Windows versions and editions](https://learn.microsoft.com/en-us/dotnet/core/install/windows).
-
-Run these commands in PowerShell; all commands after `cd` run from the repository root:
-
-```powershell
-git clone https://github.com/gcfernando/aster.git
-cd aster
-dotnet restore ModernCalculator.sln
-dotnet build ModernCalculator.sln -c Release -m:1
-dotnet run --project src/ModernCalculator.WinForms -c Release --no-build
-```
-
-**Expected startup:** Aster opens in a centered window. A fresh profile uses the light theme and Standard mode, with history collapsed. Enter `0.1 + 0.2` and press **Enter**: Standard returns exactly `0.3`. Use your regional decimal separator on the keypad.
-
-[global.json](global.json) requests SDK `10.0.100` with `latestFeature` roll-forward, allowing later installed .NET 10 feature bands. Application projects have **no third-party package dependencies**; only the xUnit test project declares NuGet package references. SDK/runtime installation and initial restore can need internet access; calculations work offline.
-
-**Using Visual Studio?** Open [ModernCalculator.sln](ModernCalculator.sln) in **Visual Studio 2026 (18+)** with the **.NET desktop development** workload. Set **ModernCalculator.WinForms** as the startup project and press **F5**. Core and Infrastructure are libraries. See Microsoft's [SDK/Visual Studio compatibility guide](https://learn.microsoft.com/en-us/dotnet/core/porting/versioning-sdk-msbuild-vs); Visual Studio 2022 does not officially support targeting .NET 10.
-
-To run on another Windows computer, [publish a distributable folder](#readme-publishing).
+Choose Aster for local numerical work that benefits from these modes and result reuse. Scientific and Converter use approximate binary64 arithmetic; Standard's higher decimal precision applies to Standard. Currency/live rates, symbolic algebra, complex numbers and time-zone calculations are outside the implemented feature set.
 
 <a id="readme-gui"></a>
 
@@ -147,27 +120,80 @@ Results are selectable and read-only. Long values fit, wrap and use explicit dig
 
 Select a gallery image to view it at full size. These real repository assets are **hidden WinForms component snapshots** of the application's client layout, produced by the UI harness. They are interface previews, not desktop recordings or evidence of physical-input, window-manager or native DPI testing.
 
-<a id="readme-features"></a>
+<a id="readme-quick-start"></a>
 
-## ✨ Features and real-world use cases
+## 🚀 Quick start
 
-Aster keeps several kinds of calculation in one local workspace. Choose the mode that matches the task and its precision model:
+### Download and run
 
-| Your task | Mode | Verified tools |
-| --- | --- | --- |
-| Check a percentage, subtotal or decimal calculation | **Standard** | Up to **100 significant input digits**; exact bounded addition/subtraction/multiplication; percentages, square/root/reciprocal, repeated equals and calculator undo/redo. |
-| Work through numerical formulas or scientific exercises | **Scientific** | Editable expressions, precedence, parentheses, powers, roots, factorials, constants, logarithms, trig/inverse trig, hyperbolic/inverse hyperbolic functions, DEG/RAD and `Ans`. |
-| Inspect integer representations or debug bit operations | **Programmer** | Synchronized DEC/HEX/OCT/BIN; 8/16/32/64-bit signed/unsigned arithmetic; wrapping, bitwise operations, shifts, remainder and a paged bit editor. |
-| Compare measurements or repeat a unit conversion | **Converter** | Twelve categories; searchable unit names/symbols/English aliases; live results; swap, Favorites and Recent; explicit history saving. |
-| Compare dates or adjust a calendar date | **Dates** | Elapsed/inclusive counting, calendar breakdown, ISO input, inline calendars, Today/Swap/Reset, signed intervals and month-end clamping. |
+1. Download **[Aster-win-x64.zip — latest main preview](https://github.com/gcfernando/aster/releases/download/latest/Aster-win-x64.zip)**. [Release notes and SHA-256 checksum](https://github.com/gcfernando/aster/releases/tag/latest) identify the published commit and passing build.
+2. Install the **[.NET 10 Desktop Runtime for Windows x64](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)** if it is not already installed. Choose **Desktop Runtime**, rather than the ASP.NET Core runtime.
+3. Right-click the ZIP, select **Extract All**, then open **`Aster.exe`** in the extracted folder. Keep all extracted files together.
 
-The converter covers **length, mass, temperature, area, volume, time, speed, data storage, energy, power, pressure and angles**. US/Imperial volumes and decimal/binary data prefixes are distinguished.
+This fully enabled download is an **unsigned preview** built automatically after a push to `main` passes verification. It may have issues that automated tests cannot detect. Use a supported Windows x64 edition; see the [installation, update and rollback guide](docs/release-guide.md). Updates are manual: close Aster and extract the new ZIP into a separate folder. Download the ZIP asset rather than GitHub's source-code archives.
 
-Choose Aster for local numerical work that benefits from these modes and result reuse. Scientific and Converter use approximate binary64 arithmetic; Standard's higher decimal precision applies to Standard. Currency/live rates, symbolic algebra, complex numbers and time-zone calculations are outside the implemented feature set.
+If a new build is still running or fails its checks, use the previously published preview. Each successful verification run also provides an **Aster-win-x64** artifact on the [Actions page](https://github.com/gcfernando/aster/actions/workflows/verify.yml), retained for 30 days; downloading Actions artifacts requires a GitHub login. The release download above is the permanent public link.
+
+### Build from source
+
+Build from source on **Windows** with the **[.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)** and **Git**. See Microsoft's [supported Windows versions and editions](https://learn.microsoft.com/en-us/dotnet/core/install/windows).
+
+Run these commands in PowerShell; all commands after `cd` run from the repository root:
+
+```powershell
+git clone https://github.com/gcfernando/aster.git
+cd aster
+dotnet restore ModernCalculator.sln
+dotnet build ModernCalculator.sln -c Release -m:1
+dotnet run --project src/ModernCalculator.WinForms -c Release --no-build
+```
+
+**Expected startup:** Aster opens in a centered window. A fresh profile uses the light theme and Standard mode, with history collapsed. Enter `0.1 + 0.2` and press **Enter**: Standard returns exactly `0.3`. Use your regional decimal separator on the keypad.
+
+[global.json](global.json) requests SDK `10.0.100` with `latestFeature` roll-forward, allowing later installed .NET 10 feature bands. Application projects have **no third-party package dependencies**; only the xUnit test project declares NuGet package references. SDK/runtime installation and initial restore can need internet access; calculations work offline.
+
+**Using Visual Studio?** Open [ModernCalculator.sln](ModernCalculator.sln) in **Visual Studio 2026 (18+)** with the **.NET desktop development** workload. Set **ModernCalculator.WinForms** as the startup project and press **F5**. Core and Infrastructure are libraries. See Microsoft's [SDK/Visual Studio compatibility guide](https://learn.microsoft.com/en-us/dotnet/core/porting/versioning-sdk-msbuild-vs); Visual Studio 2022 does not officially support targeting .NET 10.
+
+To run on another Windows computer, [publish a distributable folder](#readme-publishing).
+
+## 📦 Prerequisites and installation
+
+For the portable preview, use Windows x64 with the .NET 10 Desktop Runtime. Source builds need the .NET 10 SDK selected by [global.json](global.json); Git and initial NuGet access are required for the clone and test-package restore. The [release guide](docs/release-guide.md#install-and-first-run) covers extraction, updates and removal. Keep the complete published folder together.
+
+<a id="-configuration-privacy-and-local-data"></a>
+
+<a id="readme-configuration"></a>
+
+## ⚙️ Configuration and local data
+
+Aster uses **Preferences** for everyday settings. No account, API key, database, `.env` file or background service is required.
+
+| Data | Retention |
+| --- | --- |
+| Preferences and up to 20 favorite unit pairs | Saved to local JSON |
+| Calculation history | Up to 200 entries in session; saving between sessions defaults to **off** |
+| Memory slots | Up to 20, session only; never persisted |
+
+The default file is `%LOCALAPPDATA%\AsterCalculator\state.json`. The optional **`ASTER_DATA_DIRECTORY`** environment variable overrides its parent directory. For an isolated local profile, set it before launch:
+
+```powershell
+$env:ASTER_DATA_DIRECTORY = Join-Path $PWD '.local\readme-profile'
+dotnet run --project src/ModernCalculator.WinForms -c Release --no-build
+```
+
+The variable applies to processes started from that PowerShell session. Unset it with `Remove-Item Env:ASTER_DATA_DIRECTORY` to return subsequent launches to the default directory.
+
+State uses a temporary file in the same directory followed by replacement. Missing data uses defaults; corrupt, locked or unreadable profiles produce a warning and use defaults. The loader bounds the bytes read from one open file. Save failures remain visible, and session settings continue to work. A save exceeding the **2 MiB** file limit preserves the previous file and asks you to reduce saved history before retrying.
+
+New profiles use **schema version 1**; legacy profiles without a version remain readable. An unsupported schema is preserved and saving is refused, including when a newer application replaces the profile after startup. Use a compatible app version or a separate data directory to continue.
+
+Disabling history persistence removes saved history on the next successful save while preserving the session list and favorites; calculations then avoid per-result profile writes. Multiple instances use **last writer wins** without merging histories. State is ordinary local JSON and is **not encrypted**. F1 → Support lets you review and copy local diagnostics; it excludes calculations, history, memory, usernames and profile paths, and nothing is sent automatically.
+
+<a id="-usage-guide"></a>
 
 <a id="readme-usage"></a>
 
-## 📖 Usage guide
+## 💡 Usage
 
 ### 🧮 Standard and Scientific
 
@@ -207,7 +233,6 @@ Results update as you type. **Swap units** reverses the pair. **Save pair** save
 
 **Adjust a date** applies signed years, months, weeks and days using Add or Subtract, while preserving the separate difference inputs. Calendars support keyboard navigation and explicit week paging in compact layouts. Only ISO date results can be reused as dates; day-count history entries remain descriptive.
 
-
 <a id="readme-shortcuts"></a>
 
 ## ⌨️ Keyboard shortcuts
@@ -245,36 +270,11 @@ Display rounding does not change the underlying calculation. Scientific and Conv
 
 [Read the complete numeric reference](docs/numeric-behavior.md) for arithmetic bounds, input/state rules, domain errors, integer wrapping, calendar adjustment order and result-display behavior.
 
-<a id="readme-configuration"></a>
-
-## 🔐 Configuration, privacy and local data
-
-Aster uses **Preferences** for everyday settings. No account, API key, database, `.env` file or background service is required.
-
-| Data | Retention |
-| --- | --- |
-| Preferences and up to 20 favorite unit pairs | Saved to local JSON |
-| Calculation history | Up to 200 entries in session; saving between sessions defaults to **off** |
-| Memory slots | Up to 20, session only; never persisted |
-
-The default file is `%LOCALAPPDATA%\AsterCalculator\state.json`. The optional **`ASTER_DATA_DIRECTORY`** environment variable overrides its parent directory. For an isolated local profile, set it before launch:
-
-```powershell
-$env:ASTER_DATA_DIRECTORY = Join-Path $PWD '.local\readme-profile'
-dotnet run --project src/ModernCalculator.WinForms -c Release --no-build
-```
-
-The variable applies to processes started from that PowerShell session. Unset it with `Remove-Item Env:ASTER_DATA_DIRECTORY` to return subsequent launches to the default directory.
-
-State uses a temporary file in the same directory followed by replacement. Missing data uses defaults; corrupt, locked or unreadable profiles produce a warning and use defaults. The loader bounds the bytes read from one open file. Save failures remain visible, and session settings continue to work. A save exceeding the **2 MiB** file limit preserves the previous file and asks you to reduce saved history before retrying.
-
-New profiles use **schema version 1**; legacy profiles without a version remain readable. An unsupported schema is preserved and saving is refused, including when a newer application replaces the profile after startup. Use a compatible app version or a separate data directory to continue.
-
-Disabling history persistence removes saved history on the next successful save while preserving the session list and favorites; calculations then avoid per-result profile writes. Multiple instances use **last writer wins** without merging histories. State is ordinary local JSON and is **not encrypted**. F1 → Support lets you review and copy local diagnostics; it excludes calculations, history, memory, usernames and profile paths, and nothing is sent automatically.
+<a id="-architecture-and-technology"></a>
 
 <a id="readme-architecture"></a>
 
-## 🏗️ Architecture and technology
+## 🏗️ Architecture
 
 The desktop app calls shared engines in-process. Local persistence is handled separately from the calculator views:
 
@@ -323,10 +323,11 @@ docs/
 
 Original vector icons and a bundled multi-resolution executable icon provide the branding. [Generate-Icon.ps1](tools/Generate-Icon.ps1) regenerates the icon on Windows. The README logo is the existing icon's embedded 256-pixel PNG.
 
+<a id="-testing-and-development"></a>
 
 <a id="readme-development"></a>
 
-## 🧪 Testing and development
+## 🧪 Development and testing
 
 Run the engine and persistence tests from the repository root:
 
@@ -387,9 +388,11 @@ This may download the matching runtime pack. Both commands create local publish 
 
 The specialized [audit packaging script](tools/Package-Audited.ps1) remains available for its historical prepared-folder workflow, described in [specialized audit packaging](docs/development.md#specialized-audit-packaging).
 
+<a id="-troubleshooting-and-faq"></a>
+
 <a id="readme-troubleshooting"></a>
 
-## 💡 Troubleshooting and FAQ
+## 🛠️ Troubleshooting and limitations
 
 | Symptom | Check or action |
 | --- | --- |
@@ -419,9 +422,15 @@ Use the [issue tracker](https://github.com/gcfernando/aster/issues) for reproduc
 
 Keep changes focused, preserve the numeric contracts and run the relevant engine tests and Windows component checks. Update documentation when behavior changes. Start with the [Core engines](https://github.com/gcfernando/aster/tree/main/src/ModernCalculator.Core) and [mode views](https://github.com/gcfernando/aster/tree/main/src/ModernCalculator.WinForms/Views) to trace how input reaches a calculation.
 
+## 🔒 Security
+
+Calculations, history and memory can contain private information. Review screenshots and copied diagnostics before sharing them. For a suspected vulnerability, use GitHub private vulnerability reporting if it is enabled on the repository; otherwise arrange a private reporting channel with the maintainer before sending sensitive details. Use the public issue tracker for ordinary reproducible bugs.
+
+<a id="-license-and-resources"></a>
+
 <a id="readme-license"></a>
 
-## 📄 License and resources
+## 📄 Support and license
 
 Aster Calculator is licensed under the **[MIT License](LICENSE)**. Copyright © 2026 Gehan Fernando.
 
@@ -434,3 +443,18 @@ Aster Calculator is licensed under the **[MIT License](LICENSE)**. Copyright © 
 - [.NET 10 SDK and Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
 
 <p align="center"><a href="#readme-quick-start">🚀 Build Aster</a> · <a href="#readme-gui">🖥️ Explore the interface</a> · <a href="#readme-configuration">🔐 Local data and preferences</a></p>
+
+<a id="readme-documentation"></a>
+
+## 📚 Documentation
+
+| Start here | What it covers |
+|---|---|
+| [Quick start](#readme-quick-start) | Build and launch the Windows calculator. |
+| [Modes and usage](#readme-usage) | Decimal arithmetic, scientific expressions, programmer bases, unit conversion and dates. |
+| [Numeric behavior reference](docs/numeric-behavior.md) | Precision, rounding, range limits and state/input contracts for each engine. |
+| [Development and testing](docs/development.md) | Restore/build, xUnit results, hidden component checks, manual walkthroughs and audit packaging assumptions. |
+| [Component-check methodology](tests/ModernCalculator.UiChecks/README.md) | Running/filtering the WinForms harness and interpreting reports, snapshots and DPI simulations. |
+| [Portable release guide](docs/release-guide.md) | Verify and package matching binaries; install, update, roll back and remove the app. |
+
+[Documentation index](documentation.md) collects these guides in one place.
