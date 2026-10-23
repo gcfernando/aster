@@ -9,6 +9,8 @@ permalink: /documentation/
 
 Choose the reference for the calculation model, local build or portable Windows package you are working with.
 
+<a id="source-and-related-projects"></a>
+
 ## 🧭 Choose a guide
 
 | Task | Guide |

@@ -79,7 +79,7 @@ Choose Aster for local numerical work that benefits from these modes and result 
 
 The desktop interface is implemented in [ModernCalculator.WinForms](https://github.com/gcfernando/aster/tree/main/src/ModernCalculator.WinForms), uses the Core calculation engines and Infrastructure state store, and publishes as **`Aster.exe`**.
 
-Launch it with the Quick start command above, or run `Aster.exe` from a [published folder](#readme-publishing). A framework-dependent folder needs the **.NET 10 Desktop Runtime** on the destination computer; a self-contained folder includes its matching runtime. The optional `ASTER_DATA_DIRECTORY` setting selects a local profile directory; see [configuration and local data](#readme-configuration).
+Launch it with the [Quick start command](#readme-quick-start), or run `Aster.exe` from a [published folder](#readme-publishing). A framework-dependent folder needs the **.NET 10 Desktop Runtime** on the destination computer; a self-contained folder includes its matching runtime. The optional `ASTER_DATA_DIRECTORY` setting selects a local profile directory; see [configuration and local data](#readme-configuration).
 
 Enter and view calculations in the desktop app. The documented `dotnet` commands build, launch, test or publish it. The repository does not provide a terminal calculator, browser frontend or HTTP API.
 
@@ -273,6 +273,8 @@ Display rounding does not change the underlying calculation. Scientific and Conv
 <a id="-architecture-and-technology"></a>
 
 <a id="readme-architecture"></a>
+
+<a id="️-architecture-and-technology"></a>
 
 ## 🏗️ Architecture
 
