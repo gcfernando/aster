@@ -35,7 +35,7 @@ Filtering applies as each check is reached. A nested matrix check is reached onl
 | `report.json` | Run metadata, check outcomes, screenshot count, DPI/simulation descriptions and layout/render diagnostics. |
 | `report.txt` | Check names, status and detail in a text log. |
 | PNG files | Hidden component snapshots associated with the run. |
-| `state/` and other state subdirectories | Isolated profiles created by the checks; the normal user profile is not used. |
+| `state/` and other state subdirectories | Isolated profiles created by the checks; some additional fixtures use temporary directories outside the output folder and clean them up. The normal user profile is not used. |
 
 Use the exact child directory printed by the executable. For example, replace `<run-directory>` below with that directory name:
 
@@ -68,7 +68,7 @@ The harness creates forms and their handles **without showing windows**, running
 
 It covers all five modes through the named mode selector, light/dark preferences, no dropdown or context-menu controls, accessible names, positive control bounds, immediate-parent containment and non-overlap. Every mounted interactive control must also fit all ancestor viewports through the form; offscreen content does not satisfy accessibility. Current-page controls in a paged panel are allowed, while scrollbars are rejected. Checks include `AutoScroll`, managed scrollbar configuration and native horizontal/vertical scrollbar window styles on the harness's hidden controls. Converter tests traverse every source/destination unit page in every category and require every unit to be reachable without changing the selected unit merely by paging. Explicitly unused slots on a partial final unit page are excluded from interactive-layout assertions. Standard 100-digit exact memory, repeated result-font reuse/resize/theme rendering, scientific function/angle selectors, programmer base synchronization, and converter choices/history are exercised separately.
 
-Light and dark stored-result checks seed 200 records in isolated state, open the secondary panel at the declared minimum window size and traverse every history page. Every stored result must remain reachable, current-page actions must fit all ancestor viewports, and scrolling must remain disabled. The check returns to the previous page and retains a component snapshot. It never activates record deletion or clears user data.
+Light and dark stored-result checks seed 200 records in isolated state, open the secondary panel at the declared minimum window size and traverse every history page. Every stored result must remain reachable, current-page actions must fit all ancestor viewports, and scrolling must remain disabled. The check returns to the previous page and retains a component snapshot. This pagination check does not activate deletion. Separate commercial UI checks exercise record deletion and confirmed bulk clearing in isolated fixtures.
 
 A separate result-display check pages through a bounded numeric value of about 2,000 characters in a compact hidden host. It reconstructs all page text and requires exact character order and coverage, unchanged `FullValue`, stable page counts, correct previous/next states, visible final text-line bounds and no scrollbar. Replacing that value with a short result must reset paging and hide both pager buttons. Result-page controls are excluded from the calculator keypad when checking memory-row placement.
 

@@ -61,7 +61,7 @@ Aster brings five local calculator modes to Windows users who need reusable resu
 
 Aster keeps several kinds of calculation in one local workspace. Choose the mode that matches the task and its precision model:
 
-| Your task | Mode | Verified tools |
+| Your task | Mode | Implemented tools |
 | --- | --- | --- |
 | Check a percentage, subtotal or decimal calculation | **Standard** | Up to **100 significant input digits**; exact bounded addition/subtraction/multiplication; percentages, square/root/reciprocal, repeated equals and calculator undo/redo. |
 | Work through numerical formulas or scientific exercises | **Scientific** | Editable expressions, precedence, parentheses, powers, roots, factorials, constants, logarithms, trig/inverse trig, hyperbolic/inverse hyperbolic functions, DEG/RAD and `Ans`. |
@@ -225,7 +225,7 @@ Choose a category, then search each From/To group by name, symbol or an English 
 
 The current unit is revealed when units are loaded or the layout becomes compact, provided it matches the active search. Resizing preserves your search text, and malformed Unicode search input is handled safely.
 
-Results update as you type. **Swap units** reverses the pair. **Save pair** saves a favorite independently of history; **Save conversion**, or Enter in the value field, records a completed conversion. **Recent** restores its value and unit pair. Swap/save actions are disabled while browsing Favorites or Recent. The factor or temperature formula and precision information appear below the controls.
+Results update as you type. Converter input accepts the current decimal separator and scientific notation, but not digit grouping. **Swap units** reverses the pair while keeping the input value unchanged. **Save pair** saves a favorite independently of history; **Save conversion**, or Enter in the value field, records a completed conversion. **Recent** restores its value and unit pair. Swap/save actions are disabled while browsing Favorites or Recent. The factor or temperature formula and precision information appear below the controls.
 
 ### 📅 Date calculator
 
@@ -252,7 +252,7 @@ Results update as you type. **Swap units** reverses the pair. **Save pair** save
 | `F1` | Open built-in help, including version/build on the Support topic |
 | `Tab` / `Shift+Tab` / `Space` | Move focus / activate the focused control |
 
-Preferences → Window also offers **Ctrl+Alt+1–5** for mode switching. Enter activates a focused action reached through keyboard navigation. Header copy/paste buttons operate on the active mode; invalid numeric clipboard input preserves the current value. Paste parsing gives the current culture priority, including its decimal separator and native sign strings, with invariant dot-decimal notation as a fallback. Programmer paste uses the selected base.
+Preferences → Window also offers **Ctrl+Alt+1–5** for mode switching. Enter activates a focused action reached through keyboard navigation. Header copy/paste buttons operate on the active mode. Standard, Scientific and Programmer reject invalid numeric clipboard input before replacing their current value; Programmer uses the selected base. Standard and Scientific numeric paste parsing gives the current culture priority, including its decimal separator and native sign strings, with invariant dot-decimal notation as a fallback. Converter paste replaces the value field and shows validation if it cannot convert the input. Dates accepts ISO `YYYY-MM-DD` dates.
 
 <a id="readme-numeric-behavior"></a>
 

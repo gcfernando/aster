@@ -53,7 +53,7 @@ For experiments that should use a fresh local profile, set `ASTER_DATA_DIRECTORY
 dotnet test tests/ModernCalculator.Tests -c Release --no-restore --logger "console;verbosity=minimal"
 ```
 
-Coverage includes decimal precision/state, scientific grammar/domains, base/bit operations, conversion round trips, date boundaries, culture-aware input, memory/history, undo/redo and persistence recovery. These tests do not open a window.
+Coverage includes decimal precision/state, scientific grammar/domains, base/bit operations, conversion round trips, date boundaries, culture-aware input, memory/history, restorable calculator snapshots and persistence recovery. The WinForms component harness separately exercises the view-level undo/redo behavior. Engine tests do not open a window.
 
 The packaging report validator has a separate dependency-free PowerShell regression script:
 
